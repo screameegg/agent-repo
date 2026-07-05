@@ -1,6 +1,8 @@
 package cn.xcd.lobster.service;
 
 import cn.xcd.lobster.common.result.PageResult;
+import cn.xcd.lobster.model.vo.AdminFeedbackSummaryVO;
+import cn.xcd.lobster.model.vo.AdminFeedbackVO;
 import cn.xcd.lobster.model.vo.AdminUserVO;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 
@@ -21,4 +23,10 @@ public interface AdminService {
     SkillPackageVO publishSkill(Long id);
 
     SkillPackageVO offlineSkill(Long id);
+
+    PageResult<AdminFeedbackVO> pageFeedback(Long current, Long size, String feedbackType, String status, String keyword);
+
+    AdminFeedbackSummaryVO summarizeFeedback();
+
+    AdminFeedbackVO updateFeedbackStatus(Long id, String status);
 }

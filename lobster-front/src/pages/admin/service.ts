@@ -18,6 +18,32 @@ export interface AdminAnnouncementRequest {
   content: string;
 }
 
+export interface AdminFeedback {
+  id: string;
+  userId: string;
+  username: string;
+  account: string;
+  feedbackType: string;
+  score: number | null;
+  category: string;
+  content: string;
+  pageUrl: string;
+  userAgent: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminFeedbackSummary {
+  totalCount: number;
+  generalCount: number;
+  npsCount: number;
+  averageScore: number;
+  promoterCount: number;
+  passiveCount: number;
+  detractorCount: number;
+  openCount: number;
+}
+
 export const pageAdminUsersApi = (params?: {
   current?: number;
   size?: number;
@@ -62,4 +88,22 @@ export const offlineAdminSkillApi = (id: string): Promise<ApiResponse<SkillPacka
 
 export const publishAdminAnnouncementApi = (data: AdminAnnouncementRequest): Promise<ApiResponse<{ deliveredCount: number }>> => {
   return request.post('/admin/notifications/announcements', data);
+};
+
+export const pageAdminFeedbackApi = (params?: {
+  current?: number;
+  size?: number;
+  keyword?: string;
+  feedbackType?: string;
+  status?: string;
+}): Promise<ApiResponse<PageResult<AdminFeedback>>> => {
+  return request.get('/admin/feedback', { params });
+};
+
+export const adminFeedbackSummaryApi = (): Promise<ApiResponse<AdminFeedbackSummary>> => {
+  return request.get('/admin/feedback/summary');
+};
+
+export const updateAdminFeedbackStatusApi = (id: string, status: string): Promise<ApiResponse<AdminFeedback>> => {
+  return request.put(`/admin/feedback/${id}/status`, { status });
 };

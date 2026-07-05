@@ -15,6 +15,7 @@ import InstalledSkills from '../pages/user/Profile/InstalledSkills';
 import Tokens from '../pages/user/Profile/Tokens';
 import NotificationCenter from '../pages/notifications';
 import AdminAnnouncements from '../pages/admin/Announcements';
+import AdminFeedbackManagement from '../pages/admin/FeedbackManagement';
 import AdminSkillManagement from '../pages/admin/SkillManagement';
 import AdminUserManagement from '../pages/admin/UserManagement';
 
@@ -102,6 +103,14 @@ const router = createBrowserRouter([
         element: (
           <AuthGuard requiredRole="admin">
             <AdminSkillManagement />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: 'admin/feedback',
+        element: (
+          <AuthGuard requiredRole="admin">
+            <AdminFeedbackManagement />
           </AuthGuard>
         ),
       },

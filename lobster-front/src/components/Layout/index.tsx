@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Bell, Bot, LogOut, Package, Store, ArrowRightLeft, UserCircle, ChevronLeft, ChevronRight, ShieldCheck, UserCog, Megaphone, Menu, X } from 'lucide-react';
+import { Bell, Bot, LogOut, Package, Store, ArrowRightLeft, UserCircle, ChevronLeft, ChevronRight, ShieldCheck, UserCog, Megaphone, MessageSquareText, Menu, X } from 'lucide-react';
 import { useUserStore } from '../../store/userStore';
 import { cn } from '../../utils/cn';
 import { unreadNotificationCountApi } from '../../pages/notifications/service';
+import FeedbackWidget from '../feedback/FeedbackWidget';
 
 export default function Layout() {
   const { clearAuth, user, token } = useUserStore();
@@ -58,6 +59,7 @@ export default function Layout() {
             <div className="pt-4 mt-4 border-t-2 border-dashed border-[#E0E0E0] space-y-3">
               <NavItem to="/app/admin/skills" icon={<ShieldCheck className="w-5 h-5 shrink-0" />} label="技能管理" collapsed={collapsed} />
               <NavItem to="/app/admin/users" icon={<UserCog className="w-5 h-5 shrink-0" />} label="用户管理" collapsed={collapsed} />
+              <NavItem to="/app/admin/feedback" icon={<MessageSquareText className="w-5 h-5 shrink-0" />} label="反馈观察" collapsed={collapsed} />
               <NavItem to="/app/admin/announcements" icon={<Megaphone className="w-5 h-5 shrink-0" />} label="公告管理" collapsed={collapsed} />
             </div>
           )}
@@ -129,6 +131,7 @@ export default function Layout() {
                   <div className="pt-4 mt-4 border-t-2 border-dashed border-[#E0E0E0] space-y-3">
                     <NavItem to="/app/admin/skills" icon={<ShieldCheck className="w-5 h-5 shrink-0" />} label="技能管理" collapsed={false} onNavigate={closeMobileNav} />
                     <NavItem to="/app/admin/users" icon={<UserCog className="w-5 h-5 shrink-0" />} label="用户管理" collapsed={false} onNavigate={closeMobileNav} />
+                    <NavItem to="/app/admin/feedback" icon={<MessageSquareText className="w-5 h-5 shrink-0" />} label="反馈观察" collapsed={false} onNavigate={closeMobileNav} />
                     <NavItem to="/app/admin/announcements" icon={<Megaphone className="w-5 h-5 shrink-0" />} label="公告管理" collapsed={false} onNavigate={closeMobileNav} />
                   </div>
                 )}
@@ -154,6 +157,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <FeedbackWidget />
     </div>
   );
 }
