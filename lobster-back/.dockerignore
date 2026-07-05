@@ -1,0 +1,10 @@
+target
+.git
+.mvn
+docs
+uploads
+logs
+*.log
+.env
+.env.*
+tmp-*.log

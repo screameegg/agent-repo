@@ -1,0 +1,89 @@
+name: lobster
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-lobster}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_USER: ${MYSQL_USERNAME:-lobster}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      TZ: Asia/Shanghai
+    volumes:
+      - lobster_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      TZ: Asia/Shanghai
+    volumes:
+      - lobster_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      SQL_INIT_MODE: ${SQL_INIT_MODE:-always}
+      MYSQL_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-lobster}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-lobster}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      LOBSTER_ADMIN_LOGIN_ID: ${LOBSTER_ADMIN_LOGIN_ID:-admin}
+      LOBSTER_ADMIN_USERNAME: ${LOBSTER_ADMIN_USERNAME:-admin}
+      LOBSTER_ADMIN_PASSWORD: ${LOBSTER_ADMIN_PASSWORD:?LOBSTER_ADMIN_PASSWORD is required}
+      LOBSTER_UPLOAD_ROOT_PATH: /app/uploads
+      LOBSTER_UPLOAD_PUBLIC_PREFIX: /uploads
+      SA_TOKEN_TIMEOUT: ${SA_TOKEN_TIMEOUT:-2592000}
+      SA_TOKEN_ACTIVE_TIMEOUT: ${SA_TOKEN_ACTIVE_TIMEOUT:-604800}
+      CAPTCHA_REQUIRED: ${CAPTCHA_REQUIRED:-false}
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:-5MB}
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:-5MB}
+      TZ: Asia/Shanghai
+    volumes:
+      - lobster_uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../lobster-front
+      args:
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+
+volumes:
+  lobster_mysql_data:
+  lobster_redis_data:
+  lobster_uploads:

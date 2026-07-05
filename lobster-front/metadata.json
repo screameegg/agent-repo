@@ -1,0 +1,8 @@
+{
+  "name": "知栈",
+  "description": "创建、训练、管理、迁移属于你的 Agent 资产。Agent 的 GitHub + DockerHub。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

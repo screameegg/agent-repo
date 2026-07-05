@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: lobster-back
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:db/schema.sql
+      continue-on-error: true
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:5MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:5MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+sa-token:
+  token-name: Authorization
+  token-prefix: Bearer
+  timeout: ${SA_TOKEN_TIMEOUT:2592000}
+  active-timeout: ${SA_TOKEN_ACTIVE_TIMEOUT:604800}
+  is-concurrent: false
+  is-share: false
+  is-log: true
+
+lobster:
+  admin:
+    login-id: ${LOBSTER_ADMIN_LOGIN_ID:admin}
+    username: ${LOBSTER_ADMIN_USERNAME:admin}
+    password: ${LOBSTER_ADMIN_PASSWORD:admin}
+  rate-limiter:
+    base-key: ${RATE_LIMITER_BASE_KEY:lobster:rate-limiter:}
+  captcha:
+    base-key: ${CAPTCHA_BASE_KEY:lobster:captcha:}
+    expire-seconds: ${CAPTCHA_EXPIRE_SECONDS:300}
+    width: ${CAPTCHA_WIDTH:120}
+    height: ${CAPTCHA_HEIGHT:40}
+    length: ${CAPTCHA_LENGTH:4}
+    line-count: ${CAPTCHA_LINE_COUNT:20}
+    enabled: ${CAPTCHA_ENABLED:true}
+    required: ${CAPTCHA_REQUIRED:false}
+  upload:
+    root-path: ${LOBSTER_UPLOAD_ROOT_PATH:uploads}
+    public-prefix: ${LOBSTER_UPLOAD_PUBLIC_PREFIX:/uploads}
