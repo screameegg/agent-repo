@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS skill_publish_apply_log (
     create_time DATETIME NOT NULL COMMENT '申请时间',
     KEY idx_publish_apply_user_time (user_id, create_time),
     KEY idx_publish_apply_skill_time (skill_id, create_time)
-) COMMENT='技能发布申请日志，用于限制单用户每日发布申请次数';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='技能发布申请日志，用于限制单用户每日发布申请次数';
 
 CREATE TABLE IF NOT EXISTS notification (
     id BIGINT PRIMARY KEY COMMENT '通知ID',
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS notification (
     delete_time DATETIME NULL COMMENT '删除时间',
     KEY idx_notification_recipient_read (recipient_user_id, read_time, create_time),
     KEY idx_notification_recipient_time (recipient_user_id, create_time)
-) COMMENT='站内通知表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站内通知表';
 
 
 CREATE TABLE IF NOT EXISTS user_feedback (
@@ -197,6 +197,7 @@ CREATE TABLE IF NOT EXISTS user_feedback (
     KEY idx_user_feedback_user_type (user_id, feedback_type, create_time),
     KEY idx_user_feedback_status_time (status, create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户反馈表';
+
 CREATE TABLE IF NOT EXISTS skill_file (
     id BIGINT NOT NULL COMMENT '主键ID',
     skill_id BIGINT NOT NULL COMMENT '技能包ID',
