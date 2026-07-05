@@ -22,3 +22,7 @@ logs/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Project docs excluded from public repo
+lobster-front/docs/
+lobster-back/docs/
