@@ -4,6 +4,7 @@ import { Bell, Bot, LogOut, Package, Store, ArrowRightLeft, UserCircle, ChevronL
 import { useUserStore } from '../../store/userStore';
 import { cn } from '../../utils/cn';
 import { unreadNotificationCountApi } from '../../pages/notifications/service';
+import FeedbackWidget from '../feedback/FeedbackWidget';
 
 export default function Layout() {
   const { clearAuth, user, token } = useUserStore();
@@ -154,6 +155,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <FeedbackWidget />
     </div>
   );
 }

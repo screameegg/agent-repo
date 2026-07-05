@@ -179,6 +179,24 @@ CREATE TABLE IF NOT EXISTS notification (
     KEY idx_notification_recipient_time (recipient_user_id, create_time)
 ) COMMENT='站内通知表';
 
+
+CREATE TABLE IF NOT EXISTS user_feedback (
+    id BIGINT NOT NULL COMMENT '反馈ID',
+    user_id BIGINT NOT NULL COMMENT '提交用户ID',
+    feedback_type VARCHAR(32) NOT NULL DEFAULT 'general' COMMENT '反馈类型：general常规反馈、nps推荐度反馈',
+    score INT NULL COMMENT 'NPS推荐分，0到10',
+    category VARCHAR(64) NOT NULL DEFAULT 'general' COMMENT '反馈分类',
+    content VARCHAR(2048) NOT NULL DEFAULT '' COMMENT '反馈内容',
+    page_url VARCHAR(512) NULL COMMENT '提交页面地址',
+    user_agent VARCHAR(512) NULL COMMENT '浏览器User-Agent',
+    status VARCHAR(32) NOT NULL DEFAULT 'open' COMMENT '处理状态：open待处理、reviewed已查看、closed已关闭',
+    create_time DATETIME NOT NULL COMMENT '创建时间',
+    update_time DATETIME NOT NULL COMMENT '更新时间',
+    delete_time DATETIME NULL COMMENT '删除时间，空表示未删除',
+    PRIMARY KEY (id),
+    KEY idx_user_feedback_user_type (user_id, feedback_type, create_time),
+    KEY idx_user_feedback_status_time (status, create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户反馈表';
 CREATE TABLE IF NOT EXISTS skill_file (
     id BIGINT NOT NULL COMMENT '主键ID',
     skill_id BIGINT NOT NULL COMMENT '技能包ID',
