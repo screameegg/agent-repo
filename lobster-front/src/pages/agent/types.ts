@@ -99,6 +99,10 @@ export interface AgentDetailResponse {
   skills: AgentSkill[];
   skillMounts?: AgentSkillMount[];
   skillPackages?: SkillPackage[];
+  platformSkillCount?: number;
+  mountedSkillPackageCount?: number;
+  unmountedSkillPackageCount?: number;
+  skillPackageScope?: 'mounted_only' | string;
   memories: AgentMemory[];
   goals: AgentGoal[];
 }

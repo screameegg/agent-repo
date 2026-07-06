@@ -20,6 +20,7 @@ import cn.xcd.lobster.model.dto.AgentGoalRequest;
 import cn.xcd.lobster.model.dto.AgentGoalStepRequest;
 import cn.xcd.lobster.model.dto.AgentMemoryRequest;
 import cn.xcd.lobster.model.dto.AgentSkillRequest;
+import cn.xcd.lobster.model.dto.AiAgentRegisterRequest;
 import cn.xcd.lobster.model.dto.AiAgentSyncRequest;
 import cn.xcd.lobster.model.vo.AgentDetailVO;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -371,6 +372,44 @@ class AgentSyncServiceImplPermissionTest {
         assertEquals("Updated by agent", existing.getDescription());
         assertTrue(existing.getExtJson().contains("智能体推进目标"));
         assertTrue(existing.getExtJson().contains("\"source\":\"platform\""));
+    }
+
+    @Test
+    void registerReportsDuplicateNameBeforeMissingRole() {
+        AgentMapper agentMapper = mock(AgentMapper.class);
+        AgentSkillMapper agentSkillMapper = mock(AgentSkillMapper.class);
+        AgentMemoryMapper agentMemoryMapper = mock(AgentMemoryMapper.class);
+        AgentGoalMapper agentGoalMapper = mock(AgentGoalMapper.class);
+        AgentTokenMapper agentTokenMapper = mock(AgentTokenMapper.class);
+        AgentSkillMountMapper agentSkillMountMapper = mock(AgentSkillMountMapper.class);
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        AgentConfigEventMapper agentConfigEventMapper = mock(AgentConfigEventMapper.class);
+
+        AgentSyncServiceImpl service = new AgentSyncServiceImpl(
+                agentMapper,
+                agentSkillMapper,
+                agentMemoryMapper,
+                agentGoalMapper,
+                agentTokenMapper,
+                agentSkillMountMapper,
+                skillPackageMapper,
+                skillFileMapper,
+                agentConfigEventMapper,
+                mock(AgentSyncSkillMountService.class)
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+        token.setPermissionJson("{\"agentRegister\":true}");
+        AiAgentRegisterRequest request = new AiAgentRegisterRequest();
+        request.setName("Existing Agent");
+
+        when(agentMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.registerByToken(token, request));
+
+        assertEquals(409, error.getCode());
+        assertEquals("名称已存在", error.getMessage());
     }
 
     @Test

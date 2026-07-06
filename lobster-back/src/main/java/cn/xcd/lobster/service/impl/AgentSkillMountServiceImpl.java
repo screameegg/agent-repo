@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -83,7 +84,7 @@ public class AgentSkillMountServiceImpl implements AgentSkillMountService {
 
         createMountedSkillSnapshot(agent, skill, mount);
         if (changed && notifyAgent) {
-            createConfigChangedEvent(agent, "skill_mounted", "{\"skillId\":\"" + skill.getId() + "\"}");
+            createConfigChangedEvent(agent, "skill_mounted", skillPayload(skill, mount));
         }
         return toSkillMountVO(mount);
     }
@@ -115,7 +116,10 @@ public class AgentSkillMountServiceImpl implements AgentSkillMountService {
         }
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "skill_unmounted", "{\"skillId\":\"" + skillId + "\"}");
+        SkillPackage skill = skillPackageMapper.selectById(skillId);
+        createConfigChangedEvent(agent, "skill_unmounted", skill == null
+                ? Map.of("skillId", String.valueOf(skillId))
+                : skillPayload(skill, mount));
     }
 
     private Agent getOwnedAgent(Long ownerId, Long id) {
@@ -192,6 +196,42 @@ public class AgentSkillMountServiceImpl implements AgentSkillMountService {
         event.setCreateTime(now);
         event.setUpdateTime(now);
         agentConfigEventMapper.insert(event);
+    }
+
+    private void createConfigChangedEvent(Agent agent, String reason, Map<String, Object> payload) {
+        createConfigChangedEvent(agent, reason, toPayloadJson(payload));
+    }
+
+    private Map<String, Object> skillPayload(SkillPackage skill, AgentSkillMount mount) {
+        return Map.of(
+                "skillId", String.valueOf(skill.getId()),
+                "skillCode", defaultText(skill.getCode(), ""),
+                "skillName", defaultText(skill.getName(), ""),
+                "mountId", mount.getId() == null ? "" : String.valueOf(mount.getId()),
+                "mountStatus", defaultText(mount.getMountStatus(), "active")
+        );
+    }
+
+    private String toPayloadJson(Map<String, Object> payload) {
+        StringBuilder json = new StringBuilder("{");
+        int index = 0;
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            if (index++ > 0) {
+                json.append(",");
+            }
+            json.append("\"").append(escapeJson(entry.getKey())).append("\":\"")
+                    .append(escapeJson(String.valueOf(entry.getValue()))).append("\"");
+        }
+        json.append("}");
+        return json.toString();
+    }
+
+    private String escapeJson(String value) {
+        return value == null ? "" : value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 
     private AgentSkillMountVO toSkillMountVO(AgentSkillMount mount) {

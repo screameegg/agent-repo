@@ -183,6 +183,51 @@ class AgentSyncServiceImplSelfAckEventTest {
     }
 
     @Test
+    void tokenConfigExplainsPlatformSkillLibraryAndMountedScope() {
+        Fixture fixture = new Fixture();
+        Agent agent = agent("Skill Scope Agent", 0, 0, 0);
+        AgentToken token = token("{\"configRead\":true,\"skillRead\":true}");
+        AgentSkillMount mount = new AgentSkillMount();
+        mount.setId(50L);
+        mount.setAgentId(10L);
+        mount.setSkillId(20L);
+        mount.setMountStatus("active");
+        mount.setConfigJson("{}");
+        SkillPackage skill = new SkillPackage();
+        skill.setId(20L);
+        skill.setOwnerId(1L);
+        skill.setName("Mounted Skill");
+        skill.setCode("mounted-skill");
+        skill.setDescription("Mounted");
+        skill.setIcon("BookOpen");
+        skill.setVersion("1.0.0");
+        skill.setVisibility("private");
+        skill.setPublishStatus("draft");
+        skill.setAuditStatus("none");
+        skill.setInstallCount(0);
+        skill.setExtJson("{}");
+
+        when(fixture.agentMapper.selectOne(any(Wrapper.class))).thenReturn(agent);
+        when(fixture.agentTokenMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+        when(fixture.agentSkillMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(fixture.agentSkillMountMapper.selectList(any(Wrapper.class))).thenReturn(List.of(mount));
+        when(fixture.agentSkillMountMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+        when(fixture.skillPackageMapper.selectById(20L)).thenReturn(skill);
+        when(fixture.skillPackageMapper.selectCount(any(Wrapper.class))).thenReturn(37L);
+        when(fixture.skillFileMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(fixture.agentMemoryMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(fixture.agentGoalMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+
+        AgentDetailVO config = fixture.service.tokenConfig(token, 10L, true);
+
+        assertEquals(37, config.getPlatformSkillCount());
+        assertEquals(1, config.getMountedSkillPackageCount());
+        assertEquals(36, config.getUnmountedSkillPackageCount());
+        assertEquals("mounted_only", config.getSkillPackageScope());
+        assertEquals(1, config.getSkillPackages().size());
+    }
+
+    @Test
     void getMemoryByTokenReturnsSingleMemoryForBoundAgent() {
         Fixture fixture = new Fixture();
         Agent agent = agent("Memory Agent", 0, 1, 0);

@@ -49,6 +49,7 @@ import cn.xcd.lobster.service.support.AgentGoalStepSupport;
 import cn.xcd.lobster.service.support.SkillMetadataSupport;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +73,7 @@ import java.util.regex.Pattern;
 public class AgentServiceImpl implements AgentService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String DEFAULT_MODEL = "Claude 3";
     private static final String STATUS_ACTIVE = "active";
     private static final String STATUS_DELETED = "deleted";
@@ -534,7 +536,10 @@ public class AgentServiceImpl implements AgentService {
         agent.setMemoryCount(agent.getMemoryCount() + 1);
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "memory_created", "{\"memoryId\":\"" + memory.getId() + "\"}");
+        createConfigChangedEvent(agent, "memory_created", Map.of(
+                "memoryId", String.valueOf(memory.getId()),
+                "memory", toMemoryVO(memory)
+        ));
         return toMemoryVO(memory);
     }
 
@@ -557,7 +562,7 @@ public class AgentServiceImpl implements AgentService {
         agent.setMemoryCount(Math.max(0, agent.getMemoryCount() - 1));
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "memory_deleted", "{\"memoryId\":\"" + memoryId + "\"}");
+        createConfigChangedEvent(agent, "memory_deleted", Map.of("memoryId", String.valueOf(memoryId)));
     }
     @Override
     public List<AgentGoalVO> listGoals(Long agentId) {
@@ -595,7 +600,10 @@ public class AgentServiceImpl implements AgentService {
         agent.setGoalCount(agent.getGoalCount() + 1);
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "goal_created", "{\"goalId\":\"" + goal.getId() + "\"}");
+        createConfigChangedEvent(agent, "goal_created", Map.of(
+                "goalId", String.valueOf(goal.getId()),
+                "goal", toGoalVO(goal)
+        ));
         return toGoalVO(goal);
     }
 
@@ -615,7 +623,10 @@ public class AgentServiceImpl implements AgentService {
         agentGoalMapper.updateById(goal);
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "goal_updated", "{\"goalId\":\"" + goal.getId() + "\"}");
+        createConfigChangedEvent(agent, "goal_updated", Map.of(
+                "goalId", String.valueOf(goal.getId()),
+                "goal", toGoalVO(goal)
+        ));
         return toGoalVO(goal);
     }
 
@@ -631,7 +642,7 @@ public class AgentServiceImpl implements AgentService {
         agent.setGoalCount(Math.max(0, agent.getGoalCount() - 1));
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
-        createConfigChangedEvent(agent, "goal_deleted", "{\"goalId\":\"" + goal.getId() + "\"}");
+        createConfigChangedEvent(agent, "goal_deleted", Map.of("goalId", String.valueOf(goal.getId())));
     }
     @Override
     public List<AgentTokenVO> listTokens() {
@@ -961,6 +972,14 @@ public class AgentServiceImpl implements AgentService {
     }
 
     private void createConfigChangedEvent(Agent agent, String reason, String payloadJson) {
+        createConfigChangedEventJson(agent, reason, defaultText(payloadJson, "{}"));
+    }
+
+    private void createConfigChangedEvent(Agent agent, String reason, Map<String, Object> payload) {
+        createConfigChangedEventJson(agent, reason, toJson(payload == null ? Map.of() : payload));
+    }
+
+    private void createConfigChangedEventJson(Agent agent, String reason, String payloadJson) {
         LocalDateTime now = LocalDateTime.now();
         AgentConfigEvent event = new AgentConfigEvent();
         event.setOwnerId(agent.getOwnerId());
@@ -971,6 +990,14 @@ public class AgentServiceImpl implements AgentService {
         event.setCreateTime(now);
         event.setUpdateTime(now);
         agentConfigEventMapper.insert(event);
+    }
+
+    private String toJson(Object value) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(value);
+        } catch (Exception exception) {
+            throw new BusinessException(500, "事件载荷序列化失败");
+        }
     }
 
     private void refreshAgentAssociation(Long agentId) {

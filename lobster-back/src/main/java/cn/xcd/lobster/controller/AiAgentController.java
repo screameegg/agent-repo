@@ -50,7 +50,7 @@ public class AiAgentController {
 
     @PostMapping("/agents/register")
     public ApiResult<AgentDetailVO> register(HttpServletRequest servletRequest,
-                                             @Valid @RequestBody AiAgentRegisterRequest request) {
+                                             @RequestBody AiAgentRegisterRequest request) {
         return ApiResult.success(agentSyncService.registerByToken(currentToken(servletRequest), request));
     }
 

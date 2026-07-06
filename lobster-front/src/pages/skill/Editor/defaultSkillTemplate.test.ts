@@ -32,6 +32,9 @@ const syncMigrationTerms = [
   'config?brief=true',
   'GET /api/ai/agents/{agentId}/memories/{memoryId}',
   'GET /api/ai/skills/{idOrCode}',
+  'platformSkillCount',
+  'mountedSkillPackageCount',
+  'mounted_only',
 ];
 test('default editor skill template teaches the Lobster project workflow', () => {
   const skillFile = DEFAULT_SKILL_FILES.find((file) => file.path === 'SKILL.md');

@@ -19,6 +19,14 @@ public class AgentDetailVO {
 
     private List<SkillPackageVO> skillPackages;
 
+    private Integer platformSkillCount;
+
+    private Integer mountedSkillPackageCount;
+
+    private Integer unmountedSkillPackageCount;
+
+    private String skillPackageScope;
+
     private List<AgentMemoryVO> memories;
 
     private List<AgentGoalVO> goals;
@@ -44,6 +52,10 @@ public class AgentDetailVO {
         this.skills = skills;
         this.skillMounts = skillMounts;
         this.skillPackages = skillPackages;
+        this.platformSkillCount = null;
+        this.mountedSkillPackageCount = skillPackages == null ? 0 : skillPackages.size();
+        this.unmountedSkillPackageCount = null;
+        this.skillPackageScope = "mounted_only";
         this.memories = memories;
         this.goals = goals;
     }

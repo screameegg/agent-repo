@@ -105,6 +105,7 @@ class SkillServiceImplTest {
 
         List<SkillFile> storedFiles = new ArrayList<>();
         when(skillPackageMapper.selectOne(any(Wrapper.class))).thenReturn(skill);
+        when(skillPackageMapper.selectById(10L)).thenReturn(skill);
         when(skillFileMapper.selectList(any(Wrapper.class))).thenReturn(storedFiles);
         when(sensitiveWordBs.contains(any(String.class))).thenReturn(true);
         when(sensitiveWordBs.findAll(any(String.class))).thenReturn(List.of("blocked"));
@@ -272,5 +273,107 @@ class SkillServiceImplTest {
         assertEquals("# Skill", storedFiles.get(0).getContent());
         assertEquals(1, result.getFiles().size());
         assertEquals("# Skill", result.getFiles().get(0).getContent());
+    }
+
+    @Test
+    void detailBackfillsDefaultSkillFileForLegacyEmptyPackage() {
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        SkillPublishApplyLogMapper skillPublishApplyLogMapper = mock(SkillPublishApplyLogMapper.class);
+        UserSkillInstallMapper userSkillInstallMapper = mock(UserSkillInstallMapper.class);
+        UserMapper userMapper = mock(UserMapper.class);
+        SensitiveWordBs sensitiveWordBs = mock(SensitiveWordBs.class);
+        NotificationService notificationService = mock(NotificationService.class);
+        List<SkillFile> storedFiles = new ArrayList<>();
+
+        SkillPackage skill = new SkillPackage();
+        skill.setId(10L);
+        skill.setOwnerId(1L);
+        skill.setName("Legacy Empty Skill");
+        skill.setCode("legacy-empty-skill");
+        skill.setDescription("No files yet");
+        skill.setIcon("Sparkles");
+        skill.setVersion("1.0.0");
+        skill.setVisibility("private");
+        skill.setPublishStatus("draft");
+        skill.setAuditStatus("none");
+        skill.setInstallCount(0);
+        skill.setExtJson("{}");
+
+        when(skillPackageMapper.selectOne(any(Wrapper.class))).thenReturn(skill);
+        when(skillPackageMapper.selectById(10L)).thenReturn(skill);
+        when(skillFileMapper.selectList(any(Wrapper.class))).thenReturn(storedFiles);
+        doAnswer(invocation -> {
+            SkillFile file = invocation.getArgument(0);
+            file.setId(20L);
+            storedFiles.add(file);
+            return 1;
+        }).when(skillFileMapper).insert(any(SkillFile.class));
+
+        SkillServiceImpl service = new SkillServiceImpl(
+                skillPackageMapper,
+                skillFileMapper,
+                skillPublishApplyLogMapper,
+                userSkillInstallMapper,
+                userMapper,
+                sensitiveWordBs,
+                notificationService
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+
+        SkillPackageVO result = service.detailByToken(token, "legacy-empty-skill");
+
+        assertEquals(1, result.getFileCount());
+        assertEquals("SKILL.md", result.getFiles().get(0).getPath());
+        assertTrue(result.getFiles().get(0).getContent().contains("Legacy Empty Skill"));
+        verify(skillFileMapper).insert(any(SkillFile.class));
+    }
+
+    @Test
+    void tokenSkillListBackfillsFileCountForLegacyEmptyPackage() {
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        SkillPublishApplyLogMapper skillPublishApplyLogMapper = mock(SkillPublishApplyLogMapper.class);
+        UserSkillInstallMapper userSkillInstallMapper = mock(UserSkillInstallMapper.class);
+        UserMapper userMapper = mock(UserMapper.class);
+        SensitiveWordBs sensitiveWordBs = mock(SensitiveWordBs.class);
+        NotificationService notificationService = mock(NotificationService.class);
+
+        SkillPackage skill = new SkillPackage();
+        skill.setId(10L);
+        skill.setOwnerId(1L);
+        skill.setName("Legacy Empty Skill");
+        skill.setCode("legacy-empty-skill");
+        skill.setDescription("No files yet");
+        skill.setIcon("Sparkles");
+        skill.setVersion("1.0.0");
+        skill.setVisibility("private");
+        skill.setPublishStatus("draft");
+        skill.setAuditStatus("none");
+        skill.setInstallCount(0);
+        skill.setExtJson("{}");
+
+        when(skillPackageMapper.selectList(any(Wrapper.class))).thenReturn(List.of(skill));
+        when(skillPackageMapper.selectById(10L)).thenReturn(skill);
+        when(skillFileMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
+
+        SkillServiceImpl service = new SkillServiceImpl(
+                skillPackageMapper,
+                skillFileMapper,
+                skillPublishApplyLogMapper,
+                userSkillInstallMapper,
+                userMapper,
+                sensitiveWordBs,
+                notificationService
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+
+        List<SkillPackageVO> result = service.mineByToken(token);
+
+        assertEquals(1, result.get(0).getFileCount());
+        assertEquals(List.of(), result.get(0).getFiles());
+        verify(skillFileMapper).insert(any(SkillFile.class));
     }
 }

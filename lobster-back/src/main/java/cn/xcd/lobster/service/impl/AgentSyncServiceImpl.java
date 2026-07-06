@@ -79,8 +79,17 @@ public class AgentSyncServiceImpl implements AgentSyncService {
     @Transactional
     public AgentDetailVO registerByToken(AgentToken token, AiAgentRegisterRequest request) {
         requirePermission(token, "agentRegister");
+        if (request == null || !StringUtils.hasText(request.getName())) {
+            throw new BusinessException(400, "智能体名称不能为空");
+        }
         LocalDateTime now = LocalDateTime.now();
         String name = request.getName().trim();
+        if (hasActiveAgentName(token.getOwnerId(), name)) {
+            throw new BusinessException(409, "名称已存在");
+        }
+        if (!StringUtils.hasText(request.getRole())) {
+            throw new BusinessException(400, "角色定位不能为空");
+        }
         Agent agent = new Agent();
         agent.setOwnerId(token.getOwnerId());
         agent.setName(name);
@@ -152,7 +161,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         List<SkillPackageVO> revisionSkillPackages = brief ? skillPackages : listTokenSkillPackages(token, agent.getId(), false);
         List<AgentMemoryVO> memories = listTokenMemories(token, agent.getId());
         List<AgentGoalVO> goals = listTokenGoals(token, agent.getId());
-        return new AgentDetailVO(
+        AgentDetailVO config = new AgentDetailVO(
                 syncRevision(agent.getId(), skills, skillMounts, revisionSkillPackages, memories, goals),
                 toAgentVO(agent),
                 skills,
@@ -161,6 +170,8 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 memories,
                 goals
         );
+        applySkillPackageScope(config, token, skillPackages);
+        return config;
     }
 
     @Override
@@ -342,6 +353,27 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         );
     }
 
+    private void applySkillPackageScope(AgentDetailVO config, AgentToken token, List<SkillPackageVO> mountedPackages) {
+        int mountedCount = mountedPackages == null ? 0 : mountedPackages.size();
+        config.setMountedSkillPackageCount(mountedCount);
+        config.setSkillPackageScope("mounted_only");
+        if (!permissionEnabled(token.getPermissionJson(), "skillRead")) {
+            config.setPlatformSkillCount(null);
+            config.setUnmountedSkillPackageCount(null);
+            return;
+        }
+        int platformCount = countPlatformSkills(token.getOwnerId());
+        config.setPlatformSkillCount(platformCount);
+        config.setUnmountedSkillPackageCount(Math.max(0, platformCount - mountedCount));
+    }
+
+    private int countPlatformSkills(Long ownerId) {
+        Long count = skillPackageMapper.selectCount(new LambdaQueryWrapper<SkillPackage>()
+                .eq(SkillPackage::getOwnerId, ownerId)
+                .isNull(SkillPackage::getDeleteTime));
+        return count == null ? 0 : count.intValue();
+    }
+
     private String syncRevision(Long agentId,
                                 List<AgentSkillVO> skills,
                                 List<AgentSkillMountVO> skillMounts,
@@ -517,6 +549,15 @@ public class AgentSyncServiceImpl implements AgentSyncService {
             throw new BusinessException(404, "智能体不存在");
         }
         return agent;
+    }
+
+    private boolean hasActiveAgentName(Long ownerId, String name) {
+        Long count = agentMapper.selectCount(new LambdaQueryWrapper<Agent>()
+                .eq(Agent::getOwnerId, ownerId)
+                .eq(Agent::getName, name)
+                .isNull(Agent::getDeleteTime)
+                .ne(Agent::getStatus, STATUS_DELETED));
+        return count != null && count > 0;
     }
 
     private AgentSkill findSyncedSkill(Long agentId, AgentSkillRequest request) {
@@ -697,14 +738,20 @@ public class AgentSyncServiceImpl implements AgentSyncService {
     }
 
     private List<SkillFileVO> listSkillFileVOs(Long skillId, boolean includeContent) {
-        return skillFileMapper.selectList(new LambdaQueryWrapper<SkillFile>()
+        List<SkillFile> files = skillFileMapper.selectList(new LambdaQueryWrapper<SkillFile>()
                         .eq(SkillFile::getSkillId, skillId)
                         .isNull(SkillFile::getDeleteTime)
                         .orderByAsc(SkillFile::getSortOrder)
-                        .orderByAsc(SkillFile::getPath))
-                .stream()
+                        .orderByAsc(SkillFile::getPath));
+        if (files.isEmpty()) {
+            SkillPackage skill = skillPackageMapper.selectById(skillId);
+            if (skill != null && skill.getDeleteTime() == null) {
+                files = List.of(createDefaultSkillFile(skill));
+            }
+        }
+        return files.stream()
                 .map(file -> new SkillFileVO(
-                        String.valueOf(file.getId()),
+                        file.getId() == null ? null : String.valueOf(file.getId()),
                         file.getParentId() == null ? null : String.valueOf(file.getParentId()),
                         file.getNodeType(),
                         file.getName(),
@@ -820,5 +867,29 @@ public class AgentSyncServiceImpl implements AgentSyncService {
 
     private Integer contentSize(String content) {
         return content == null ? 0 : content.getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    private SkillFile createDefaultSkillFile(SkillPackage skill) {
+        LocalDateTime now = LocalDateTime.now();
+        SkillFile file = new SkillFile();
+        file.setSkillId(skill.getId());
+        file.setNodeType("file");
+        file.setName("SKILL.md");
+        file.setPath("SKILL.md");
+        file.setLanguage("markdown");
+        file.setContent(defaultSkillContent(skill));
+        file.setSortOrder(0);
+        file.setCreateTime(now);
+        file.setUpdateTime(now);
+        skillFileMapper.insert(file);
+        return file;
+    }
+
+    private String defaultSkillContent(SkillPackage skill) {
+        return "# " + defaultText(skill.getName(), "Skill") + "\n\n"
+                + "## 用途\n"
+                + defaultText(skill.getDescription(), "请补充该 Skill 的用途、触发条件和使用方式。") + "\n\n"
+                + "## 文件说明\n"
+                + "这是平台为历史空文件 Skill 自动补齐的默认入口文件，请编辑为完整 Skill 说明。\n";
     }
 }

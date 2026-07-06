@@ -588,7 +588,15 @@ public class SkillServiceImpl implements SkillService {
         Long count = skillFileMapper.selectCount(new LambdaQueryWrapper<SkillFile>()
                 .eq(SkillFile::getSkillId, skillId)
                 .isNull(SkillFile::getDeleteTime));
-        return count == null ? 0 : count.intValue();
+        if (count != null && count > 0) {
+            return count.intValue();
+        }
+        SkillPackage skill = skillPackageMapper.selectById(skillId);
+        if (skill == null || skill.getDeleteTime() != null) {
+            return 0;
+        }
+        createDefaultSkillFile(skill);
+        return 1;
     }
 
     private List<String> findSensitiveWords(SkillPackage skill) {
@@ -640,14 +648,20 @@ public class SkillServiceImpl implements SkillService {
     }
 
     private List<SkillFileVO> listFileVOs(Long skillId) {
-        return skillFileMapper.selectList(new LambdaQueryWrapper<SkillFile>()
+        List<SkillFile> files = skillFileMapper.selectList(new LambdaQueryWrapper<SkillFile>()
                         .eq(SkillFile::getSkillId, skillId)
                         .isNull(SkillFile::getDeleteTime)
                         .orderByAsc(SkillFile::getSortOrder)
-                        .orderByAsc(SkillFile::getPath))
-                .stream()
+                        .orderByAsc(SkillFile::getPath));
+        if (files.isEmpty()) {
+            SkillPackage skill = skillPackageMapper.selectById(skillId);
+            if (skill != null && skill.getDeleteTime() == null) {
+                files = List.of(createDefaultSkillFile(skill));
+            }
+        }
+        return files.stream()
                 .map(file -> new SkillFileVO(
-                        String.valueOf(file.getId()),
+                        file.getId() == null ? null : String.valueOf(file.getId()),
                         file.getParentId() == null ? null : String.valueOf(file.getParentId()),
                         file.getNodeType(),
                         file.getName(),
@@ -794,5 +808,29 @@ public class SkillServiceImpl implements SkillService {
 
     private Integer contentSize(String content) {
         return content == null ? 0 : content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+    }
+
+    private SkillFile createDefaultSkillFile(SkillPackage skill) {
+        LocalDateTime now = LocalDateTime.now();
+        SkillFile file = new SkillFile();
+        file.setSkillId(skill.getId());
+        file.setNodeType(NODE_FILE);
+        file.setName("SKILL.md");
+        file.setPath("SKILL.md");
+        file.setLanguage("markdown");
+        file.setContent(defaultSkillContent(skill));
+        file.setSortOrder(0);
+        file.setCreateTime(now);
+        file.setUpdateTime(now);
+        skillFileMapper.insert(file);
+        return file;
+    }
+
+    private String defaultSkillContent(SkillPackage skill) {
+        return "# " + defaultText(skill.getName(), "Skill") + "\n\n"
+                + "## 用途\n"
+                + defaultText(skill.getDescription(), "请补充该 Skill 的用途、触发条件和使用方式。") + "\n\n"
+                + "## 文件说明\n"
+                + "这是平台为历史空文件 Skill 自动补齐的默认入口文件，请编辑为完整 Skill 说明。\n";
     }
 }

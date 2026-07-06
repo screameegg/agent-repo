@@ -12,7 +12,9 @@ test('builds a concrete AI onboarding prompt from the frontend origin', () => {
   assert.match(prompt, /https:\/\/lobster\.example\.com\/docs\/ai-agent-api\.md/);
   assert.match(prompt, /LOBSTER_API_BASE_URL=https:\/\/lobster\.example\.com/);
   assert.match(prompt, /GET \$LOBSTER_API_BASE_URL\/api\/ai\/token\/me/);
-  assert.match(prompt, /GET \$LOBSTER_API_BASE_URL\/api\/ai\/agents\/\{agentId\}\/config/);
+  assert.match(prompt, /GET \$LOBSTER_API_BASE_URL\/api\/ai\/agents\/\{agentId\}\/config\?brief=true/);
+  assert.match(prompt, /platformSkillCount/);
+  assert.match(prompt, /mountedSkillPackageCount/);
   assert.match(prompt, /baseRevision/);
   assert.match(prompt, /confirmSync/);
   assert.match(prompt, /DELETE \$LOBSTER_API_BASE_URL\/api\/ai\/agents\/\{agentId\}\/goals\/\{goalId\}/);

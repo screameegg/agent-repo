@@ -1,6 +1,8 @@
 package cn.xcd.lobster.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cn.xcd.lobster.mapper.AgentConfigEventMapper;
 import cn.xcd.lobster.mapper.AgentGoalMapper;
 import cn.xcd.lobster.mapper.AgentMapper;
@@ -41,6 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentServiceImplDetailTest {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
     void profileReturnsAgentOnlyWithoutLoadingTabDataOrFileTree() {
@@ -136,6 +140,10 @@ class AgentServiceImplDetailTest {
         assertEquals("config_changed", event.getEventType());
         assertEquals("pending", event.getEventStatus());
         assertTrue(event.getPayloadJson().contains("memory_created"));
+        JsonNode payload = readEventPayload(event);
+        assertEquals("memory_created", payload.get("reason").asText());
+        assertEquals("Project rule", payload.get("payload").get("memory").get("title").asText());
+        assertEquals("Always pull config before sync", payload.get("payload").get("memory").get("content").asText());
     }
 
     @Test
@@ -361,6 +369,14 @@ class AgentServiceImplDetailTest {
         ArgumentCaptor<AgentConfigEvent> eventCaptor = ArgumentCaptor.forClass(AgentConfigEvent.class);
         verify(agentConfigEventMapper).insert(eventCaptor.capture());
         return eventCaptor.getValue();
+    }
+
+    private JsonNode readEventPayload(AgentConfigEvent event) {
+        try {
+            return OBJECT_MAPPER.readTree(event.getPayloadJson());
+        } catch (Exception exception) {
+            throw new AssertionError(exception);
+        }
     }
 
     private record Fixture(AgentServiceImpl service,

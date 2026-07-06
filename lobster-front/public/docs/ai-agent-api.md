@@ -646,7 +646,7 @@ curl -X GET "$LOBSTER_API_BASE_URL/api/ai/agents/$LOBSTER_AGENT_ID/events" \
       "eventType": "config_changed",
       "eventStatus": "pending",
       "status": "pending",
-      "payloadJson": "{\"reason\":\"skill_mounted\",\"payload\":{\"skillId\":\"2066\"}}",
+      "payloadJson": "{\"reason\":\"memory_created\",\"payload\":{\"memoryId\":\"2074\",\"memory\":{\"id\":\"2074\",\"title\":\"Project rule\",\"content\":\"Always pull brief config before sync\",\"memoryType\":\"fact\",\"importance\":8,\"source\":\"manual\",\"createdAt\":\"2026-07-06\"}}}",
       "createdAt": "2026-06-20"
     }
   ]
@@ -754,6 +754,10 @@ brief 返回结构示例，`files` 中不会包含 `content`：
         ]
       }
     ],
+    "platformSkillCount": 37,
+    "mountedSkillPackageCount": 20,
+    "unmountedSkillPackageCount": 17,
+    "skillPackageScope": "mounted_only",
     "memories": [],
     "goals": []
   }
@@ -767,6 +771,10 @@ Agent 应这样应用配置：
 - `skills`：展示快照。不要只靠它学习文件内容。
 - `skillMounts`：读取平台挂载关系、挂载状态和配置 JSON。
 - `skillPackages`：brief 下只返回已挂载 Skill 的文件元数据，用于判断本地缓存是否需要刷新；学习文件正文时调用单个 Skill detail。
+- `platformSkillCount`：当前 Token owner 的平台技能库总数。
+- `mountedSkillPackageCount`：当前 Agent 已挂载的 Skill Package 数量。
+- `unmountedSkillPackageCount`：平台技能库里尚未挂载到当前 Agent 的数量。
+- `skillPackageScope`：`mounted_only` 表示 `skillPackages` 只包含当前 Agent 已挂载的 Skill，不代表平台技能库全量列表。
 - `memories`：合并到长期记忆。
 - `goals`：更新发展方向和执行任务。目标可以长期存在，AI 应复用 `goals[].id` 持续同步 `steps`，不需要填写整体百分比。
 
