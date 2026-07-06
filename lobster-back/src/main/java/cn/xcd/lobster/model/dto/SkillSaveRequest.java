@@ -1,5 +1,6 @@
 package cn.xcd.lobster.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -27,5 +28,6 @@ public class SkillSaveRequest {
 
     private List<String> coreCapabilities;
 
+    @JsonAlias({"skillFiles", "fileTree"})
     private List<SkillFileRequest> files;
 }

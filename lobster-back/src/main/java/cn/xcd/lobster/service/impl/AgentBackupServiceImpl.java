@@ -117,6 +117,7 @@ public class AgentBackupServiceImpl implements AgentBackupService {
                     continue;
                 }
                 String relativePath = name.substring(folder.length());
+                String content = new String(entry.getValue(), StandardCharsets.UTF_8);
                 SkillFileVO file = new SkillFileVO(
                         null,
                         null,
@@ -124,7 +125,8 @@ public class AgentBackupServiceImpl implements AgentBackupService {
                         fileName(relativePath),
                         relativePath,
                         languageOf(relativePath),
-                        new String(entry.getValue(), StandardCharsets.UTF_8),
+                        content,
+                        entry.getValue().length,
                         order++
                 );
                 skill.getFiles().add(file);

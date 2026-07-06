@@ -29,6 +29,9 @@ const syncMigrationTerms = [
   'Codex',
   'Claude Code',
   '通用 Agent',
+  'config?brief=true',
+  'GET /api/ai/agents/{agentId}/memories/{memoryId}',
+  'GET /api/ai/skills/{idOrCode}',
 ];
 test('default editor skill template teaches the Lobster project workflow', () => {
   const skillFile = DEFAULT_SKILL_FILES.find((file) => file.path === 'SKILL.md');
@@ -75,6 +78,7 @@ test('default editor skill template uses progressive disclosure files', () => {
 
   assert.match(filesByPath.get('workflows/config-event-listening.md')?.content || '', /events/);
   assert.match(filesByPath.get('workflows/config-event-listening.md')?.content || '', /ack/);
+  assert.match(filesByPath.get('workflows/config-event-listening.md')?.content || '', /config\?brief=true/);
   assert.match(filesByPath.get('workflows/agent-sync-preview.md')?.content || '', /baseRevision/);
   assert.match(filesByPath.get('workflows/agent-sync-preview.md')?.content || '', /confirmSync=true/);
   assert.match(filesByPath.get('references/domain-rules.md')?.content || '', /完整文件树/);

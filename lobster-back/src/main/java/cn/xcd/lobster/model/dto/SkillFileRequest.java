@@ -1,5 +1,6 @@
 package cn.xcd.lobster.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -10,9 +11,11 @@ public class SkillFileRequest {
 
     private String parentId;
 
+    @JsonAlias({"type", "node_type"})
     @NotBlank(message = "节点类型不能为空")
     private String nodeType;
 
+    @JsonAlias({"filename", "fileName"})
     @NotBlank(message = "名称不能为空")
     private String name;
 

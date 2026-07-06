@@ -8,6 +8,7 @@ import cn.xcd.lobster.model.dto.SkillSaveRequest;
 import cn.xcd.lobster.model.entity.AgentToken;
 import cn.xcd.lobster.model.vo.AgentConfigEventVO;
 import cn.xcd.lobster.model.vo.AgentDetailVO;
+import cn.xcd.lobster.model.vo.AgentMemoryVO;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 import cn.xcd.lobster.service.AgentSyncService;
 import cn.xcd.lobster.service.SkillService;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -52,9 +54,18 @@ public class AiAgentController {
         return ApiResult.success(agentSyncService.registerByToken(currentToken(servletRequest), request));
     }
 
+    @GetMapping("/agents/{id}")
+    public ApiResult<AgentDetailVO> agentDetail(HttpServletRequest request,
+                                                @PathVariable Long id,
+                                                @RequestParam(defaultValue = "false") boolean brief) {
+        return ApiResult.success(agentSyncService.tokenConfig(currentToken(request), id, brief));
+    }
+
     @GetMapping("/agents/{id}/config")
-    public ApiResult<AgentDetailVO> config(HttpServletRequest request, @PathVariable Long id) {
-        return ApiResult.success(agentSyncService.tokenConfig(currentToken(request), id));
+    public ApiResult<AgentDetailVO> config(HttpServletRequest request,
+                                           @PathVariable Long id,
+                                           @RequestParam(defaultValue = "false") boolean brief) {
+        return ApiResult.success(agentSyncService.tokenConfig(currentToken(request), id, brief));
     }
 
     @PostMapping("/agents/{id}/sync")
@@ -82,6 +93,15 @@ public class AiAgentController {
         requirePermission(token, "goalWrite");
         agentSyncService.deleteGoalByToken(token, id, goalId);
         return ApiResult.success();
+    }
+
+    @GetMapping("/agents/{id}/memories/{memoryId}")
+    public ApiResult<AgentMemoryVO> memoryDetail(HttpServletRequest request,
+                                                 @PathVariable Long id,
+                                                 @PathVariable Long memoryId) {
+        AgentToken token = currentToken(request);
+        requirePermission(token, "memoryRead");
+        return ApiResult.success(agentSyncService.getMemoryByToken(token, id, memoryId));
     }
     @GetMapping("/agents/{id}/backup")
     public ApiResult<AgentDetailVO> backup(HttpServletRequest request, @PathVariable Long id) {
@@ -114,11 +134,11 @@ public class AiAgentController {
         return ApiResult.success(skillService.mineByToken(token));
     }
 
-    @GetMapping("/skills/{id}")
-    public ApiResult<SkillPackageVO> skillDetail(HttpServletRequest request, @PathVariable Long id) {
+    @GetMapping({"/skills/{idOrCode}", "/skills/{idOrCode}/detail"})
+    public ApiResult<SkillPackageVO> skillDetail(HttpServletRequest request, @PathVariable String idOrCode) {
         AgentToken token = currentToken(request);
         requirePermission(token, "skillRead");
-        return ApiResult.success(skillService.detailByToken(token, id));
+        return ApiResult.success(skillService.detailByToken(token, idOrCode));
     }
 
     @PostMapping("/skills")

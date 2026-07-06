@@ -10,6 +10,7 @@ import cn.xcd.lobster.model.dto.SkillSaveRequest;
 import cn.xcd.lobster.model.entity.AgentToken;
 import cn.xcd.lobster.model.entity.SkillFile;
 import cn.xcd.lobster.model.entity.SkillPackage;
+import cn.xcd.lobster.model.vo.SkillFileVO;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 import cn.xcd.lobster.service.NotificationService;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -158,5 +159,118 @@ class SkillServiceImplTest {
                 any(String.class),
                 any(Long.class)
         );
+    }
+
+    @Test
+    void tokenSkillDetailAcceptsCodeAndReturnsPersistedFiles() {
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        SkillPublishApplyLogMapper skillPublishApplyLogMapper = mock(SkillPublishApplyLogMapper.class);
+        UserSkillInstallMapper userSkillInstallMapper = mock(UserSkillInstallMapper.class);
+        UserMapper userMapper = mock(UserMapper.class);
+        SensitiveWordBs sensitiveWordBs = mock(SensitiveWordBs.class);
+        NotificationService notificationService = mock(NotificationService.class);
+
+        SkillPackage skill = new SkillPackage();
+        skill.setId(10L);
+        skill.setOwnerId(1L);
+        skill.setName("Repository Reader");
+        skill.setCode("repository-reader");
+        skill.setDescription("Read repository files");
+        skill.setIcon("BookOpen");
+        skill.setVersion("1.0.0");
+        skill.setVisibility("private");
+        skill.setPublishStatus("draft");
+        skill.setAuditStatus("none");
+        skill.setInstallCount(0);
+        skill.setExtJson("{}");
+        SkillFile file = new SkillFile();
+        file.setId(20L);
+        file.setSkillId(10L);
+        file.setNodeType("file");
+        file.setName("SKILL.md");
+        file.setPath("SKILL.md");
+        file.setLanguage("markdown");
+        file.setContent("# Repository Reader");
+        file.setSortOrder(0);
+
+        when(skillPackageMapper.selectOne(any(Wrapper.class))).thenReturn(skill);
+        when(skillFileMapper.selectList(any(Wrapper.class))).thenReturn(List.of(file));
+
+        SkillServiceImpl service = new SkillServiceImpl(
+                skillPackageMapper,
+                skillFileMapper,
+                skillPublishApplyLogMapper,
+                userSkillInstallMapper,
+                userMapper,
+                sensitiveWordBs,
+                notificationService
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+
+        SkillPackageVO result = service.detailByToken(token, "repository-reader");
+
+        assertEquals("repository-reader", result.getCode());
+        assertEquals(1, result.getFiles().size());
+        SkillFileVO resultFile = result.getFiles().get(0);
+        assertEquals("SKILL.md", resultFile.getPath());
+        assertEquals("# Repository Reader", resultFile.getContent());
+    }
+
+    @Test
+    void createByTokenPersistsAndReturnsSubmittedFiles() {
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        SkillPublishApplyLogMapper skillPublishApplyLogMapper = mock(SkillPublishApplyLogMapper.class);
+        UserSkillInstallMapper userSkillInstallMapper = mock(UserSkillInstallMapper.class);
+        UserMapper userMapper = mock(UserMapper.class);
+        SensitiveWordBs sensitiveWordBs = mock(SensitiveWordBs.class);
+        NotificationService notificationService = mock(NotificationService.class);
+        List<SkillFile> storedFiles = new ArrayList<>();
+
+        when(skillPackageMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(skillPackageMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
+        doAnswer(invocation -> {
+            SkillPackage skill = invocation.getArgument(0);
+            skill.setId(10L);
+            return 1;
+        }).when(skillPackageMapper).insert(any(SkillPackage.class));
+        doAnswer(invocation -> {
+            SkillFile file = invocation.getArgument(0);
+            file.setId((long) storedFiles.size() + 1);
+            storedFiles.add(file);
+            return 1;
+        }).when(skillFileMapper).insert(any(SkillFile.class));
+        when(skillFileMapper.selectList(any(Wrapper.class))).thenReturn(storedFiles);
+
+        SkillServiceImpl service = new SkillServiceImpl(
+                skillPackageMapper,
+                skillFileMapper,
+                skillPublishApplyLogMapper,
+                userSkillInstallMapper,
+                userMapper,
+                sensitiveWordBs,
+                notificationService
+        );
+        SkillFileRequest file = new SkillFileRequest();
+        file.setNodeType("file");
+        file.setName("SKILL.md");
+        file.setPath("SKILL.md");
+        file.setLanguage("markdown");
+        file.setContent("# Skill");
+        SkillSaveRequest request = new SkillSaveRequest();
+        request.setName("Repository Reader");
+        request.setCode("repository-reader");
+        request.setFiles(List.of(file));
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+
+        SkillPackageVO result = service.createByToken(token, request);
+
+        assertEquals(1, storedFiles.size());
+        assertEquals("# Skill", storedFiles.get(0).getContent());
+        assertEquals(1, result.getFiles().size());
+        assertEquals("# Skill", result.getFiles().get(0).getContent());
     }
 }

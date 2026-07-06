@@ -61,4 +61,26 @@ class AiAgentRequestCompatibilityTest {
 
         assertEquals("{\"code\":\"repository-reader\"}", request.getConfigJson());
     }
+
+    @Test
+    void skillSaveFilesAcceptAgentFriendlyFileAliases() throws Exception {
+        SkillSaveRequest request = objectMapper.readValue("""
+                {
+                  "name": "Repository Reader",
+                  "files": [
+                    {
+                      "type": "file",
+                      "filename": "SKILL.md",
+                      "path": "SKILL.md",
+                      "content": "# Skill"
+                    }
+                  ]
+                }
+                """, SkillSaveRequest.class);
+
+        assertEquals(1, request.getFiles().size());
+        assertEquals("file", request.getFiles().get(0).getNodeType());
+        assertEquals("SKILL.md", request.getFiles().get(0).getName());
+        assertEquals("# Skill", request.getFiles().get(0).getContent());
+    }
 }

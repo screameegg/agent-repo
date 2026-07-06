@@ -139,15 +139,21 @@ public class AgentSyncServiceImpl implements AgentSyncService {
 
     @Override
     public AgentDetailVO tokenConfig(AgentToken token, Long agentId) {
+        return tokenConfig(token, agentId, false);
+    }
+
+    @Override
+    public AgentDetailVO tokenConfig(AgentToken token, Long agentId, boolean brief) {
         requirePermission(token, "configRead");
         Agent agent = getTokenAgent(token, agentId);
         List<AgentSkillVO> skills = listTokenSkills(token, agent.getId());
         List<AgentSkillMountVO> skillMounts = listTokenSkillMounts(token, agent.getId());
-        List<SkillPackageVO> skillPackages = listTokenSkillPackages(token, agent.getId());
+        List<SkillPackageVO> skillPackages = listTokenSkillPackages(token, agent.getId(), !brief);
+        List<SkillPackageVO> revisionSkillPackages = brief ? skillPackages : listTokenSkillPackages(token, agent.getId(), false);
         List<AgentMemoryVO> memories = listTokenMemories(token, agent.getId());
         List<AgentGoalVO> goals = listTokenGoals(token, agent.getId());
         return new AgentDetailVO(
-                syncRevision(agent.getId(), skills, skillMounts, skillPackages, memories, goals),
+                syncRevision(agent.getId(), skills, skillMounts, revisionSkillPackages, memories, goals),
                 toAgentVO(agent),
                 skills,
                 skillMounts,
@@ -165,7 +171,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 toAgentVO(agent),
                 listAgentSkills(agent.getId()),
                 listAgentSkillMounts(agent.getId()),
-                listMountedSkillPackages(agent.getId()),
+                listMountedSkillPackages(agent.getId(), true),
                 listAgentMemories(agent.getId()),
                 listAgentGoals(agent.getId())
         );
@@ -225,6 +231,21 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         agent.setMemoryCount(Math.max(0, agent.getMemoryCount() - 1));
         agent.setUpdateTime(now);
         agentMapper.updateById(agent);
+    }
+
+    @Override
+    public AgentMemoryVO getMemoryByToken(AgentToken token, Long agentId, Long memoryId) {
+        requirePermission(token, "memoryRead");
+        Agent agent = getTokenAgent(token, agentId);
+        AgentMemory memory = agentMemoryMapper.selectOne(new LambdaQueryWrapper<AgentMemory>()
+                .eq(AgentMemory::getId, memoryId)
+                .eq(AgentMemory::getAgentId, agent.getId())
+                .isNull(AgentMemory::getDeleteTime)
+                .last("limit 1"));
+        if (memory == null) {
+            throw new BusinessException(404, "记忆不存在");
+        }
+        return toMemoryVO(memory);
     }
 
     @Override
@@ -315,7 +336,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 agentId,
                 listTokenSkills(token, agentId),
                 listTokenSkillMounts(token, agentId),
-                listTokenSkillPackages(token, agentId),
+                listTokenSkillPackages(token, agentId, false),
                 listTokenMemories(token, agentId),
                 listTokenGoals(token, agentId)
         );
@@ -525,11 +546,11 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         return listAgentSkillMounts(agentId);
     }
 
-    private List<SkillPackageVO> listTokenSkillPackages(AgentToken token, Long agentId) {
+    private List<SkillPackageVO> listTokenSkillPackages(AgentToken token, Long agentId, boolean includeContent) {
         if (!permissionEnabled(token.getPermissionJson(), "skillRead")) {
             return List.of();
         }
-        return listMountedSkillPackages(agentId);
+        return listMountedSkillPackages(agentId, includeContent);
     }
 
     private List<AgentMemoryVO> listTokenMemories(AgentToken token, Long agentId) {
@@ -568,7 +589,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 .toList();
     }
 
-    private List<SkillPackageVO> listMountedSkillPackages(Long agentId) {
+    private List<SkillPackageVO> listMountedSkillPackages(Long agentId, boolean includeContent) {
         List<AgentSkillMount> mounts = agentSkillMountMapper.selectList(new LambdaQueryWrapper<AgentSkillMount>()
                 .eq(AgentSkillMount::getAgentId, agentId)
                 .isNull(AgentSkillMount::getDeleteTime)
@@ -579,7 +600,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 .distinct()
                 .map(skillPackageMapper::selectById)
                 .filter(skill -> skill != null && skill.getDeleteTime() == null)
-                .map(skill -> toSkillPackageVO(skill, true))
+                .map(skill -> toSkillPackageVO(skill, true, includeContent))
                 .toList();
     }
 
@@ -654,7 +675,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         );
     }
 
-    private SkillPackageVO toSkillPackageVO(SkillPackage skill, boolean withFiles) {
+    private SkillPackageVO toSkillPackageVO(SkillPackage skill, boolean withFiles, boolean includeContent) {
         return new SkillPackageVO(
                 String.valueOf(skill.getId()),
                 skill.getName(),
@@ -671,11 +692,11 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                 skill.getAuditTime() == null ? "" : skill.getAuditTime().toString(),
                 skill.getInstallCount() == null ? 0 : skill.getInstallCount(),
                 "",
-                withFiles ? listSkillFileVOs(skill.getId()) : List.of()
+                withFiles ? listSkillFileVOs(skill.getId(), includeContent) : List.of()
         );
     }
 
-    private List<SkillFileVO> listSkillFileVOs(Long skillId) {
+    private List<SkillFileVO> listSkillFileVOs(Long skillId, boolean includeContent) {
         return skillFileMapper.selectList(new LambdaQueryWrapper<SkillFile>()
                         .eq(SkillFile::getSkillId, skillId)
                         .isNull(SkillFile::getDeleteTime)
@@ -689,7 +710,8 @@ public class AgentSyncServiceImpl implements AgentSyncService {
                         file.getName(),
                         file.getPath(),
                         file.getLanguage(),
-                        file.getContent(),
+                        includeContent ? file.getContent() : null,
+                        contentSize(file.getContent()),
                         file.getSortOrder()
                 ))
                 .toList();
@@ -794,5 +816,9 @@ public class AgentSyncServiceImpl implements AgentSyncService {
 
     private String defaultText(String value, String fallback) {
         return StringUtils.hasText(value) ? value.trim() : fallback;
+    }
+
+    private Integer contentSize(String content) {
+        return content == null ? 0 : content.getBytes(StandardCharsets.UTF_8).length;
     }
 }

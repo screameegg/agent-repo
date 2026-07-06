@@ -136,8 +136,8 @@ public class SkillServiceImpl implements SkillService {
     }
 
     @Override
-    public SkillPackageVO detailByToken(AgentToken token, Long id) {
-        SkillPackage skill = getReadableSkill(id, token.getOwnerId());
+    public SkillPackageVO detailByToken(AgentToken token, String idOrCode) {
+        SkillPackage skill = getReadableSkill(idOrCode, token.getOwnerId());
         return toSkillVO(skill, true);
     }
 
@@ -521,6 +521,44 @@ public class SkillServiceImpl implements SkillService {
         return skill;
     }
 
+    private SkillPackage getReadableSkill(String idOrCode, Long userId) {
+        if (!StringUtils.hasText(idOrCode)) {
+            throw new BusinessException(400, "技能标识不能为空");
+        }
+        String value = idOrCode.trim();
+        SkillPackage skill = null;
+        try {
+            skill = skillPackageMapper.selectById(Long.valueOf(value));
+        } catch (NumberFormatException ignored) {
+            // Non-numeric identifiers are stable Skill Package codes.
+        }
+        if (skill == null || skill.getDeleteTime() != null) {
+            skill = skillPackageMapper.selectOne(new LambdaQueryWrapper<SkillPackage>()
+                    .eq(SkillPackage::getOwnerId, userId)
+                    .eq(SkillPackage::getCode, value)
+                    .isNull(SkillPackage::getDeleteTime)
+                    .last("limit 1"));
+        }
+        if (skill == null) {
+            skill = skillPackageMapper.selectOne(new LambdaQueryWrapper<SkillPackage>()
+                    .eq(SkillPackage::getCode, value)
+                    .eq(SkillPackage::getVisibility, VISIBILITY_PUBLIC)
+                    .eq(SkillPackage::getPublishStatus, STATUS_PUBLISHED)
+                    .isNull(SkillPackage::getDeleteTime)
+                    .last("limit 1"));
+        }
+        if (skill == null || skill.getDeleteTime() != null) {
+            throw new BusinessException(404, "技能不存在");
+        }
+        boolean own = userId.equals(skill.getOwnerId());
+        boolean publicPublished = VISIBILITY_PUBLIC.equals(skill.getVisibility())
+                && STATUS_PUBLISHED.equals(skill.getPublishStatus());
+        if (!own && !publicPublished) {
+            throw new BusinessException(403, "无权查看该技能");
+        }
+        return skill;
+    }
+
     private SkillPackageVO toSkillVO(SkillPackage skill, boolean withFiles) {
         User owner = userMapper.selectById(skill.getOwnerId());
         List<SkillFileVO> files = withFiles ? listFileVOs(skill.getId()) : List.of();
@@ -616,6 +654,7 @@ public class SkillServiceImpl implements SkillService {
                         file.getPath(),
                         file.getLanguage(),
                         file.getContent(),
+                        contentSize(file.getContent()),
                         file.getSortOrder()
                 ))
                 .toList();
@@ -751,5 +790,9 @@ public class SkillServiceImpl implements SkillService {
 
     private String defaultText(String value, String fallback) {
         return StringUtils.hasText(value) ? value.trim() : fallback;
+    }
+
+    private Integer contentSize(String content) {
+        return content == null ? 0 : content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
     }
 }

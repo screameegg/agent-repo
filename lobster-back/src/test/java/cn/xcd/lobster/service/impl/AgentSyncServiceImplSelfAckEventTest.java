@@ -17,16 +17,23 @@ import cn.xcd.lobster.model.entity.AgentConfigEvent;
 import cn.xcd.lobster.model.entity.AgentGoal;
 import cn.xcd.lobster.model.entity.AgentMemory;
 import cn.xcd.lobster.model.entity.AgentSkill;
+import cn.xcd.lobster.model.entity.AgentSkillMount;
 import cn.xcd.lobster.model.entity.AgentToken;
+import cn.xcd.lobster.model.entity.SkillFile;
+import cn.xcd.lobster.model.entity.SkillPackage;
 import cn.xcd.lobster.model.vo.AgentDetailVO;
+import cn.xcd.lobster.model.vo.AgentMemoryVO;
+import cn.xcd.lobster.model.vo.SkillFileVO;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -119,6 +126,77 @@ class AgentSyncServiceImplSelfAckEventTest {
         fixture.service.syncByToken(token, 10L, request);
 
         verify(fixture.agentSyncSkillMountService).mountMatchingSkillPackage(token, agent, skillRequest);
+    }
+
+    @Test
+    void tokenConfigBriefReturnsMountedSkillFileMetadataWithoutContent() {
+        Fixture fixture = new Fixture();
+        Agent agent = agent("Brief Config Agent", 0, 0, 0);
+        AgentToken token = token("{\"configRead\":true,\"skillRead\":true}");
+        AgentSkillMount mount = new AgentSkillMount();
+        mount.setId(50L);
+        mount.setAgentId(10L);
+        mount.setSkillId(20L);
+        mount.setMountStatus("active");
+        mount.setConfigJson("{}");
+        SkillPackage skill = new SkillPackage();
+        skill.setId(20L);
+        skill.setOwnerId(1L);
+        skill.setName("Repository Reader");
+        skill.setCode("repository-reader");
+        skill.setDescription("Read repositories");
+        skill.setIcon("BookOpen");
+        skill.setVersion("1.0.0");
+        skill.setVisibility("private");
+        skill.setPublishStatus("draft");
+        skill.setAuditStatus("none");
+        skill.setInstallCount(0);
+        skill.setExtJson("{}");
+        String content = "# Repository Reader\n\nLong instructions.";
+        SkillFile file = new SkillFile();
+        file.setId(60L);
+        file.setSkillId(20L);
+        file.setNodeType("file");
+        file.setName("SKILL.md");
+        file.setPath("SKILL.md");
+        file.setLanguage("markdown");
+        file.setContent(content);
+        file.setSortOrder(0);
+
+        when(fixture.agentMapper.selectOne(any(Wrapper.class))).thenReturn(agent);
+        when(fixture.agentTokenMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+        when(fixture.agentSkillMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(fixture.agentSkillMountMapper.selectList(any(Wrapper.class))).thenReturn(List.of(mount));
+        when(fixture.agentSkillMountMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+        when(fixture.skillPackageMapper.selectById(20L)).thenReturn(skill);
+        when(fixture.skillFileMapper.selectList(any(Wrapper.class))).thenReturn(List.of(file));
+        when(fixture.agentMemoryMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(fixture.agentGoalMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+
+        AgentDetailVO config = fixture.service.tokenConfig(token, 10L, true);
+
+        SkillFileVO briefFile = config.getSkillPackages().get(0).getFiles().get(0);
+        assertEquals("SKILL.md", briefFile.getPath());
+        assertEquals("file", briefFile.getNodeType());
+        assertEquals(content.getBytes(StandardCharsets.UTF_8).length, briefFile.getSize());
+        assertNull(briefFile.getContent());
+    }
+
+    @Test
+    void getMemoryByTokenReturnsSingleMemoryForBoundAgent() {
+        Fixture fixture = new Fixture();
+        Agent agent = agent("Memory Agent", 0, 1, 0);
+        AgentMemory memory = memory(30L, "Project rule");
+        AgentToken token = token("{\"memoryRead\":true}");
+
+        when(fixture.agentMapper.selectOne(any(Wrapper.class))).thenReturn(agent);
+        when(fixture.agentMemoryMapper.selectOne(any(Wrapper.class))).thenReturn(memory);
+
+        AgentMemoryVO result = fixture.service.getMemoryByToken(token, 10L, 30L);
+
+        assertEquals("30", result.getId());
+        assertEquals("Project rule", result.getTitle());
+        assertEquals("Expired", result.getContent());
     }
 
     private static void stubEmptyConfig(Fixture fixture, Agent agent, AgentToken token) {

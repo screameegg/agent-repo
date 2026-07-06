@@ -27,7 +27,7 @@ public interface SkillService {
 
     List<SkillPackageVO> mineByToken(AgentToken token);
 
-    SkillPackageVO detailByToken(AgentToken token, Long id);
+    SkillPackageVO detailByToken(AgentToken token, String idOrCode);
 
     SkillPackageVO publish(Long id);
 

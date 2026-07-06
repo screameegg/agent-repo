@@ -480,6 +480,7 @@ public class AgentServiceImpl implements AgentService {
                         file.getPath(),
                         file.getLanguage(),
                         file.getContent(),
+                        contentSize(file.getContent()),
                         file.getSortOrder()
                 ))
                 .toList();
@@ -1074,6 +1075,10 @@ public class AgentServiceImpl implements AgentService {
     @Transactional
     public void ackTokenEvent(AgentToken token, Long eventId) {
         agentSyncService.ackTokenEvent(token, eventId);
+    }
+
+    private Integer contentSize(String content) {
+        return content == null ? 0 : content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
     }
 
     private boolean permissionEnabled(String permissions, String permission) {
