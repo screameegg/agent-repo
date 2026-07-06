@@ -120,10 +120,10 @@ public class AiAgentController {
     }
 
     @PostMapping("/events/{eventId}/ack")
-    public ApiResult<Void> ackEvent(HttpServletRequest request, @PathVariable Long eventId) {
+    public ApiResult<Void> ackEvent(HttpServletRequest request, @PathVariable String eventId) {
         AgentToken token = currentToken(request);
         requirePermission(token, "configRead");
-        agentSyncService.ackTokenEvent(token, eventId);
+        agentSyncService.ackTokenEvent(token, parseEventId(eventId));
         return ApiResult.success();
     }
 
@@ -171,5 +171,13 @@ public class AiAgentController {
     private boolean permissionEnabled(String permissions, String permission) {
         return permissions != null
                 && Pattern.compile("\"" + permission + "\"\\s*:\\s*true").matcher(permissions).find();
+    }
+
+    private Long parseEventId(String eventId) {
+        try {
+            return Long.valueOf(eventId);
+        } catch (RuntimeException ignored) {
+            throw new BusinessException(404, "事件不存在");
+        }
     }
 }

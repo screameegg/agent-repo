@@ -31,4 +31,6 @@ public class AiAgentRegisterRequest {
     private List<AgentMemoryRequest> memories;
 
     private List<AgentGoalRequest> goals;
+
+    private Boolean force;
 }

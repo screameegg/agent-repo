@@ -82,6 +82,10 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         if (request == null || !StringUtils.hasText(request.getName())) {
             throw new BusinessException(400, "智能体名称不能为空");
         }
+        Long previousAgentId = token.getAgentId();
+        if (previousAgentId != null && !Boolean.TRUE.equals(request.getForce())) {
+            throw new BusinessException(409, "令牌已绑定智能体，如需重新绑定请传 force=true");
+        }
         LocalDateTime now = LocalDateTime.now();
         String name = request.getName().trim();
         if (hasActiveAgentName(token.getOwnerId(), name)) {
@@ -111,6 +115,9 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         token.setAgentId(agent.getId());
         token.setUpdateTime(now);
         agentTokenMapper.updateById(token);
+        if (previousAgentId != null && !previousAgentId.equals(agent.getId())) {
+            refreshAgentAssociation(previousAgentId);
+        }
         refreshAgentAssociation(agent.getId());
         syncChildren(token, agent, request.getSkills(), request.getMemories(), request.getGoals());
         return tokenConfig(token, agent.getId());

@@ -413,6 +413,111 @@ class AgentSyncServiceImplPermissionTest {
     }
 
     @Test
+    void registerDoesNotRebindExistingTokenUnlessForced() {
+        AgentMapper agentMapper = mock(AgentMapper.class);
+        AgentSkillMapper agentSkillMapper = mock(AgentSkillMapper.class);
+        AgentMemoryMapper agentMemoryMapper = mock(AgentMemoryMapper.class);
+        AgentGoalMapper agentGoalMapper = mock(AgentGoalMapper.class);
+        AgentTokenMapper agentTokenMapper = mock(AgentTokenMapper.class);
+        AgentSkillMountMapper agentSkillMountMapper = mock(AgentSkillMountMapper.class);
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        AgentConfigEventMapper agentConfigEventMapper = mock(AgentConfigEventMapper.class);
+
+        AgentSyncServiceImpl service = new AgentSyncServiceImpl(
+                agentMapper,
+                agentSkillMapper,
+                agentMemoryMapper,
+                agentGoalMapper,
+                agentTokenMapper,
+                agentSkillMountMapper,
+                skillPackageMapper,
+                skillFileMapper,
+                agentConfigEventMapper,
+                mock(AgentSyncSkillMountService.class)
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+        token.setAgentId(10L);
+        token.setPermissionJson("{\"agentRegister\":true}");
+        AiAgentRegisterRequest request = new AiAgentRegisterRequest();
+        request.setName("New Agent");
+        request.setRole("研发专家");
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.registerByToken(token, request));
+
+        assertEquals(409, error.getCode());
+        assertEquals("令牌已绑定智能体，如需重新绑定请传 force=true", error.getMessage());
+        verify(agentMapper, never()).insert(any(Agent.class));
+        verify(agentTokenMapper, never()).updateById(token);
+    }
+
+    @Test
+    void registerCanRebindExistingTokenWhenForced() {
+        AgentMapper agentMapper = mock(AgentMapper.class);
+        AgentSkillMapper agentSkillMapper = mock(AgentSkillMapper.class);
+        AgentMemoryMapper agentMemoryMapper = mock(AgentMemoryMapper.class);
+        AgentGoalMapper agentGoalMapper = mock(AgentGoalMapper.class);
+        AgentTokenMapper agentTokenMapper = mock(AgentTokenMapper.class);
+        AgentSkillMountMapper agentSkillMountMapper = mock(AgentSkillMountMapper.class);
+        SkillPackageMapper skillPackageMapper = mock(SkillPackageMapper.class);
+        SkillFileMapper skillFileMapper = mock(SkillFileMapper.class);
+        AgentConfigEventMapper agentConfigEventMapper = mock(AgentConfigEventMapper.class);
+
+        AgentSyncServiceImpl service = new AgentSyncServiceImpl(
+                agentMapper,
+                agentSkillMapper,
+                agentMemoryMapper,
+                agentGoalMapper,
+                agentTokenMapper,
+                agentSkillMountMapper,
+                skillPackageMapper,
+                skillFileMapper,
+                agentConfigEventMapper,
+                mock(AgentSyncSkillMountService.class)
+        );
+        AgentToken token = new AgentToken();
+        token.setOwnerId(1L);
+        token.setAgentId(10L);
+        token.setPermissionJson("{\"agentRegister\":true}");
+        AiAgentRegisterRequest request = new AiAgentRegisterRequest();
+        request.setName("Forced Agent");
+        request.setRole("研发专家");
+        request.setForce(true);
+
+        Agent inserted = new Agent();
+        inserted.setId(20L);
+        inserted.setOwnerId(1L);
+        inserted.setName("Forced Agent");
+        inserted.setCode("forced-agent");
+        inserted.setDescription("Forced rebind");
+        inserted.setRole("研发专家");
+        inserted.setSkillCount(0);
+        inserted.setMemoryCount(0);
+        inserted.setGoalCount(0);
+        inserted.setAvatar("");
+        inserted.setBaseModel("Claude 3");
+        inserted.setStatus("active");
+        inserted.setAssociationStatus("bound");
+        inserted.setCreateTime(LocalDateTime.now());
+        inserted.setUpdateTime(LocalDateTime.now());
+
+        when(agentMapper.selectCount(any(Wrapper.class))).thenReturn(0L, 1L, 1L);
+        when(agentMapper.selectById(20L)).thenReturn(inserted);
+        when(agentMapper.selectOne(any(Wrapper.class))).thenReturn(inserted);
+        when(agentSkillMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(agentSkillMountMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(agentMemoryMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(agentGoalMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+
+        service.registerByToken(token, request);
+
+        assertEquals(20L, token.getAgentId());
+        verify(agentMapper).insert(any(Agent.class));
+        verify(agentTokenMapper).updateById(token);
+    }
+
+    @Test
     void agentSyncSkipsExactDuplicateGoalAfterPreflightConfirmation() {
         AgentMapper agentMapper = mock(AgentMapper.class);
         AgentSkillMapper agentSkillMapper = mock(AgentSkillMapper.class);

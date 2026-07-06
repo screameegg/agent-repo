@@ -8,10 +8,12 @@ import cn.xcd.lobster.service.SkillService;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 class AiAgentControllerPermissionTest {
 
@@ -143,5 +145,27 @@ class AiAgentControllerPermissionTest {
         controller.skillDetail(request, "repository-reader");
 
         verify(skillService).detailByToken(token, "repository-reader");
+    }
+
+    @Test
+    void ackEventRejectsNonNumericEventIdAsNotFound() {
+        AgentSyncService agentSyncService = mock(AgentSyncService.class);
+        AiAgentController controller = new AiAgentController(
+                agentSyncService,
+                mock(SkillService.class)
+        );
+        AgentToken token = new AgentToken();
+        token.setPermissionJson("{\"configRead\":true}");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setAttribute("agentToken", token);
+
+        BusinessException error = assertThrows(
+                BusinessException.class,
+                () -> controller.ackEvent(request, "nonexistent")
+        );
+
+        assertEquals(404, error.getCode());
+        assertEquals("事件不存在", error.getMessage());
+        verify(agentSyncService, never()).ackTokenEvent(any(), any());
     }
 }
