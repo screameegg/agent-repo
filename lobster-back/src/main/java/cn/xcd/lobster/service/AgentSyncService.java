@@ -6,6 +6,7 @@ import cn.xcd.lobster.model.entity.AgentToken;
 import cn.xcd.lobster.model.vo.AgentConfigEventVO;
 import cn.xcd.lobster.model.vo.AgentDetailVO;
 import cn.xcd.lobster.model.vo.AgentMemoryVO;
+import cn.xcd.lobster.model.vo.AiAgentSyncResponse;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ public interface AgentSyncService {
 
     AgentDetailVO registerByToken(AgentToken token, AiAgentRegisterRequest request);
 
-    AgentDetailVO syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request);
+    AiAgentSyncResponse syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request);
 
     AgentDetailVO tokenConfig(AgentToken token, Long agentId);
 

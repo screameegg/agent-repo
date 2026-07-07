@@ -48,12 +48,16 @@ export default function PublishedSkills() {
     const skill = skills.find(s => s.id === skillId);
     if (!skill) return;
     if (skill.publishStatus === 'published') {
-      const response = await offlineSkillApi(skillId);
-      if (response.code === 200) {
-        setSkills(skills.map(s => s.id === skillId ? response.data : s));
-        setToast({ type: 'success', message: '技能已下架。' });
-      } else {
-        setToast({ type: 'error', message: response.message || '下架失败' });
+      try {
+        const response = await offlineSkillApi(skillId);
+        if (response.code === 200) {
+          setSkills(skills.map(s => s.id === skillId ? response.data : s));
+          setToast({ type: 'success', message: '技能已下架。' });
+        } else {
+          setToast({ type: 'error', message: response.message || '下架失败' });
+        }
+      } catch (error) {
+        setToast({ type: 'error', message: getApiErrorMessage(error, '下架失败，请稍后重试') });
       }
     } else {
       setSkillToPublish(skillId);
@@ -62,18 +66,23 @@ export default function PublishedSkills() {
 
   const confirmPublish = async () => {
     if (skillToPublish) {
-      const response = await publishSkillApi(skillToPublish);
-      if (response.code === 200) {
-        setSkills(skills.map(s => s.id === skillToPublish ? response.data : s));
-        if (response.data.auditStatus === 'pending' || response.data.publishStatus === 'pending') {
-          setToast({ type: 'info', message: '检测到需要审核的内容，已提交管理员审核，审核通过后会上架到技能市场。' });
+      try {
+        const response = await publishSkillApi(skillToPublish);
+        if (response.code === 200) {
+          setSkills(skills.map(s => s.id === skillToPublish ? response.data : s));
+          if (response.data.auditStatus === 'pending' || response.data.publishStatus === 'pending') {
+            setToast({ type: 'info', message: '检测到需要审核的内容，已提交管理员审核，审核通过后会上架到技能市场。' });
+          } else {
+            setToast({ type: 'success', message: '技能已发布到市场。' });
+          }
         } else {
-          setToast({ type: 'success', message: '技能已发布到市场。' });
+          setToast({ type: 'error', message: response.message || '发布失败' });
         }
-      } else {
-        setToast({ type: 'error', message: response.message || '发布失败' });
+      } catch (error) {
+        setToast({ type: 'error', message: getApiErrorMessage(error, '发布失败，请稍后重试') });
+      } finally {
+        setSkillToPublish(null);
       }
-      setSkillToPublish(null);
     }
   };
 
@@ -482,4 +491,18 @@ function statusClassName(skill: SkillPackage) {
     return 'bg-[#FFEDEB] text-[#B42318] border border-[#FF6B6B]';
   }
   return 'bg-[#FFF3E0] text-[#E65100] border border-[#FFCC80]';
+}
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (isRecord(error) && isRecord(error.response) && isRecord(error.response.data)) {
+    const message = error.response.data.message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+  return fallback;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

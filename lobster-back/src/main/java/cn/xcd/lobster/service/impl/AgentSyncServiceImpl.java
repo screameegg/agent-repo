@@ -31,6 +31,7 @@ import cn.xcd.lobster.model.vo.AgentMemoryVO;
 import cn.xcd.lobster.model.vo.AgentSkillMountVO;
 import cn.xcd.lobster.model.vo.AgentSkillVO;
 import cn.xcd.lobster.model.vo.AgentVO;
+import cn.xcd.lobster.model.vo.AiAgentSyncResponse;
 import cn.xcd.lobster.model.vo.SkillFileVO;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 import cn.xcd.lobster.service.AgentSyncService;
@@ -125,32 +126,34 @@ public class AgentSyncServiceImpl implements AgentSyncService {
 
     @Override
     @Transactional
-    public AgentDetailVO syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request) {
+    public AiAgentSyncResponse syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request) {
         requirePermission(token, "agentSync");
+        AiAgentSyncRequest syncRequest = request == null ? new AiAgentSyncRequest() : request;
         Agent agent = getTokenAgent(token, agentId);
-        requireSyncPreflight(token, agent.getId(), request);
-        if (StringUtils.hasText(request.getName())) {
-            agent.setName(request.getName().trim());
+        requireSyncPreflight(token, agent.getId(), syncRequest);
+        boolean agentChanged = hasAgentPayload(syncRequest);
+        if (StringUtils.hasText(syncRequest.getName())) {
+            agent.setName(syncRequest.getName().trim());
         }
-        if (StringUtils.hasText(request.getRole())) {
-            agent.setRole(request.getRole().trim());
+        if (StringUtils.hasText(syncRequest.getRole())) {
+            agent.setRole(syncRequest.getRole().trim());
         }
-        if (request.getDescription() != null) {
-            agent.setDescription(request.getDescription());
+        if (syncRequest.getDescription() != null) {
+            agent.setDescription(syncRequest.getDescription());
         }
-        if (request.getSystemPrompt() != null) {
-            agent.setSystemPrompt(request.getSystemPrompt());
+        if (syncRequest.getSystemPrompt() != null) {
+            agent.setSystemPrompt(syncRequest.getSystemPrompt());
         }
-        if (StringUtils.hasText(request.getAvatar())) {
-            agent.setAvatar(request.getAvatar().trim());
+        if (StringUtils.hasText(syncRequest.getAvatar())) {
+            agent.setAvatar(syncRequest.getAvatar().trim());
         }
-        if (StringUtils.hasText(request.getBaseModel())) {
-            agent.setBaseModel(request.getBaseModel().trim());
+        if (StringUtils.hasText(syncRequest.getBaseModel())) {
+            agent.setBaseModel(syncRequest.getBaseModel().trim());
         }
         agent.setUpdateTime(LocalDateTime.now());
         agentMapper.updateById(agent);
-        syncChildren(token, agent, request.getSkills(), request.getMemories(), request.getGoals());
-        return tokenConfig(token, agent.getId());
+        syncChildren(token, agent, syncRequest.getSkills(), syncRequest.getMemories(), syncRequest.getGoals());
+        return syncResponse(token, agent, syncRequest, agentChanged);
     }
 
     @Override
@@ -347,6 +350,35 @@ public class AgentSyncServiceImpl implements AgentSyncService {
 
     private boolean hasWritablePayload(List<?> payload, String permissions, String permission) {
         return payload != null && !payload.isEmpty() && permissionEnabled(permissions, permission);
+    }
+
+    private AiAgentSyncResponse syncResponse(AgentToken token,
+                                             Agent agent,
+                                             AiAgentSyncRequest request,
+                                             boolean agentChanged) {
+        return new AiAgentSyncResponse(
+                currentSyncRevision(token, agent.getId()),
+                new AiAgentSyncResponse.Changed(
+                        agentChanged,
+                        changedCount(request.getSkills(), token.getPermissionJson(), "skillWrite"),
+                        changedCount(request.getMemories(), token.getPermissionJson(), "memoryWrite"),
+                        changedCount(request.getGoals(), token.getPermissionJson(), "goalWrite")
+                )
+        );
+    }
+
+    private boolean hasAgentPayload(AiAgentSyncRequest request) {
+        return request != null
+                && (StringUtils.hasText(request.getName())
+                || StringUtils.hasText(request.getRole())
+                || request.getDescription() != null
+                || request.getSystemPrompt() != null
+                || StringUtils.hasText(request.getAvatar())
+                || StringUtils.hasText(request.getBaseModel()));
+    }
+
+    private int changedCount(List<?> payload, String permissions, String permission) {
+        return hasWritablePayload(payload, permissions, permission) ? payload.size() : 0;
     }
 
     private String currentSyncRevision(AgentToken token, Long agentId) {

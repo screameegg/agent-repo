@@ -40,6 +40,7 @@ import cn.xcd.lobster.model.vo.AgentSkillMountVO;
 import cn.xcd.lobster.model.vo.AgentTokenCreateVO;
 import cn.xcd.lobster.model.vo.AgentTokenVO;
 import cn.xcd.lobster.model.vo.AgentVO;
+import cn.xcd.lobster.model.vo.AiAgentSyncResponse;
 import cn.xcd.lobster.model.vo.SkillFileVO;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 import cn.xcd.lobster.service.AgentSkillMountService;
@@ -1079,7 +1080,7 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     @Transactional
-    public AgentDetailVO syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request) {
+    public AiAgentSyncResponse syncByToken(AgentToken token, Long agentId, AiAgentSyncRequest request) {
         return agentSyncService.syncByToken(token, agentId, request);
     }
 

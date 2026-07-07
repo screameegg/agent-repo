@@ -9,6 +9,8 @@ import cn.xcd.lobster.model.entity.AgentToken;
 import cn.xcd.lobster.model.vo.AgentConfigEventVO;
 import cn.xcd.lobster.model.vo.AgentDetailVO;
 import cn.xcd.lobster.model.vo.AgentMemoryVO;
+import cn.xcd.lobster.model.vo.AgentRevisionVO;
+import cn.xcd.lobster.model.vo.AiAgentSyncResponse;
 import cn.xcd.lobster.model.vo.SkillPackageVO;
 import cn.xcd.lobster.service.AgentSyncService;
 import cn.xcd.lobster.service.SkillService;
@@ -62,46 +64,62 @@ public class AiAgentController {
     }
 
     @GetMapping("/agents/{id}/config")
-    public ApiResult<AgentDetailVO> config(HttpServletRequest request,
-                                           @PathVariable Long id,
-                                           @RequestParam(defaultValue = "false") boolean brief) {
-        return ApiResult.success(agentSyncService.tokenConfig(currentToken(request), id, brief));
+    public ApiResult<?> config(HttpServletRequest request,
+                               @PathVariable Long id,
+                               @RequestParam(defaultValue = "false") boolean brief,
+                               @RequestParam(required = false) String scope) {
+        AgentDetailVO config = agentSyncService.tokenConfig(currentToken(request), id, brief || "revision".equals(scope));
+        if ("revision".equals(scope)) {
+            return ApiResult.success(new AgentRevisionVO(
+                    config.getSyncRevision(),
+                    config.getAgent() == null ? 0 : config.getAgent().getMemoryCount(),
+                    config.getAgent() == null ? 0 : config.getAgent().getGoalCount(),
+                    config.getMountedSkillPackageCount()
+            ));
+        }
+        return ApiResult.success(config);
     }
 
     @PostMapping("/agents/{id}/sync")
-    public ApiResult<AgentDetailVO> sync(HttpServletRequest servletRequest,
-                                         @PathVariable Long id,
-                                         @RequestBody AiAgentSyncRequest request) {
-        return ApiResult.success(agentSyncService.syncByToken(currentToken(servletRequest), id, request));
+    public ApiResult<?> sync(HttpServletRequest servletRequest,
+                             @PathVariable Long id,
+                             @RequestParam(name = "return", defaultValue = "summary") String returnMode,
+                             @RequestBody(required = false) AiAgentSyncRequest request) {
+        AgentToken token = currentToken(servletRequest);
+        AiAgentSyncResponse response = agentSyncService.syncByToken(token, id, request);
+        if ("config".equals(returnMode)) {
+            return ApiResult.success(agentSyncService.tokenConfig(token, id));
+        }
+        return ApiResult.success(response);
     }
 
     @DeleteMapping("/agents/{id}/memories/{memoryId}")
     public ApiResult<Void> deleteMemory(HttpServletRequest request,
                                         @PathVariable Long id,
-                                        @PathVariable Long memoryId) {
+                                        @PathVariable String memoryId) {
         AgentToken token = currentToken(request);
         requirePermission(token, "memoryWrite");
-        agentSyncService.deleteMemoryByToken(token, id, memoryId);
+        agentSyncService.deleteMemoryByToken(token, id, parseResourceId(memoryId, "记忆不存在"));
         return ApiResult.success();
     }
 
     @DeleteMapping("/agents/{id}/goals/{goalId}")
     public ApiResult<Void> deleteGoal(HttpServletRequest request,
                                       @PathVariable Long id,
-                                      @PathVariable Long goalId) {
+                                      @PathVariable String goalId) {
         AgentToken token = currentToken(request);
         requirePermission(token, "goalWrite");
-        agentSyncService.deleteGoalByToken(token, id, goalId);
+        agentSyncService.deleteGoalByToken(token, id, parseResourceId(goalId, "目标不存在"));
         return ApiResult.success();
     }
 
     @GetMapping("/agents/{id}/memories/{memoryId}")
     public ApiResult<AgentMemoryVO> memoryDetail(HttpServletRequest request,
                                                  @PathVariable Long id,
-                                                 @PathVariable Long memoryId) {
+                                                 @PathVariable String memoryId) {
         AgentToken token = currentToken(request);
         requirePermission(token, "memoryRead");
-        return ApiResult.success(agentSyncService.getMemoryByToken(token, id, memoryId));
+        return ApiResult.success(agentSyncService.getMemoryByToken(token, id, parseResourceId(memoryId, "记忆不存在")));
     }
     @GetMapping("/agents/{id}/backup")
     public ApiResult<AgentDetailVO> backup(HttpServletRequest request, @PathVariable Long id) {
@@ -174,10 +192,14 @@ public class AiAgentController {
     }
 
     private Long parseEventId(String eventId) {
+        return parseResourceId(eventId, "事件不存在");
+    }
+
+    private Long parseResourceId(String value, String notFoundMessage) {
         try {
-            return Long.valueOf(eventId);
+            return Long.valueOf(value);
         } catch (RuntimeException ignored) {
-            throw new BusinessException(404, "事件不存在");
+            throw new BusinessException(404, notFoundMessage);
         }
     }
 }

@@ -127,23 +127,23 @@ function CompactStepDots({ goal }: { goal: AgentGoal }) {
 function GoalStepTimeline({ markers }: { markers: ReturnType<typeof getGoalStepMarkers> }) {
   if (markers.length === 0) {
     return (
-      <div className="py-6 text-center text-sm font-black text-[#888] border-2 border-dashed border-[#E0E0E0] rounded-xl">
+      <div className="mx-2 sm:mx-4 py-6 text-center text-sm font-black text-[#888] border-2 border-dashed border-[#E0E0E0] rounded-xl bg-white">
         等待 AI 同步执行步骤
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 px-2 sm:px-4">
       {markers.map((marker) => (
-        <div key={marker.step.id || `${marker.step.title}-${marker.index}`} className="grid grid-cols-[36px_1fr] gap-3">
+        <div key={marker.step.id || `${marker.step.title}-${marker.index}`} className="grid grid-cols-[44px_minmax(0,1fr)] gap-4">
           <div className="flex flex-col items-center">
             <div className={`w-9 h-9 rounded-full border-2 border-[#1A1A1A] flex items-center justify-center shadow-[2px_2px_0px_0px_#1A1A1A] ${stepNodeClass(marker.state, marker.active)}`}>
               {stepIcon(marker.state)}
             </div>
             {marker.index < marker.total && <div className="w-0.5 flex-1 min-h-5 bg-[#1A1A1A] mt-2" />}
           </div>
-          <div className={`pb-4 ${marker.index < marker.total ? 'border-b-2 border-dashed border-[#E0E0E0]' : ''}`}>
+          <div className={`min-w-0 pb-4 pr-1 ${marker.index < marker.total ? 'border-b-2 border-dashed border-[#E0E0E0]' : ''}`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-black text-[#1A1A1A]">{marker.step.title}</span>
               <span className={`px-2 py-0.5 rounded-lg border-2 border-[#1A1A1A] text-[10px] font-black ${statusBadgeClass(marker.state)}`}>
@@ -414,8 +414,8 @@ export default function GoalList({ goals, onCreateGoal, onUpdateGoal, onDeleteGo
                     </div>
                   )}
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-4 rounded-2xl border-2 border-[#1A1A1A] bg-[#FAF9F6] p-4 sm:p-5 shadow-[3px_3px_0px_0px_#1A1A1A]">
+                    <div className="flex items-center justify-between gap-3 pl-1 sm:pl-2">
                       <h4 className="text-sm font-black text-[#1A1A1A]">执行步骤</h4>
                       <span className="text-xs font-black text-[#888]">AI 每次同步可更新一个或多个步骤</span>
                     </div>
@@ -444,8 +444,8 @@ export default function GoalList({ goals, onCreateGoal, onUpdateGoal, onDeleteGo
                   )}
                   <textarea rows={4} value={editForm.description} onChange={(event) => setEditForm({ ...editForm, description: event.target.value })} placeholder="任务描述" className="w-full px-4 py-3 bg-[#FAF9F6] border-2 border-[#1A1A1A] rounded-xl text-sm font-bold outline-none focus:bg-white resize-none custom-scrollbar" />
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-4 rounded-2xl border-2 border-[#1A1A1A] bg-[#FAF9F6] p-4 sm:p-5 shadow-[3px_3px_0px_0px_#1A1A1A]">
+                    <div className="flex items-center justify-between gap-3 pl-1 sm:pl-2">
                       <h4 className="text-sm font-black text-[#1A1A1A]">执行步骤</h4>
                       <button type="button" onClick={() => setEditForm((current) => ({ ...current, steps: [...current.steps, blankStep((current.steps.length + 1) * 10)] }))} className="inline-flex items-center gap-1 px-3 py-2 border-2 border-[#1A1A1A] rounded-lg text-xs font-black bg-[#FFD93D] shadow-[2px_2px_0px_0px_#1A1A1A]"><Plus className="w-3 h-3" />新增</button>
                     </div>

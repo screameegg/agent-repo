@@ -2,7 +2,7 @@ spring:
   application:
     name: lobster-back
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:local}
   sql:
     init:
       mode: ${SQL_INIT_MODE:always}

@@ -19,7 +19,14 @@ import java.util.UUID;
 public final class AgentGoalStepSupport {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final Set<String> STATUSES = Set.of("pending", "running", "completed", "failed");
+    private static final Set<String> STATUSES = Set.of(
+            "pending",
+            "running",
+            "in_progress",
+            "completed",
+            "skipped",
+            "failed"
+    );
 
     private AgentGoalStepSupport() {
     }
