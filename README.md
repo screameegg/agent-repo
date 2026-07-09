@@ -1,15 +1,46 @@
-# agent-repo
+# 知栈 Lobster
 
-知栈 / Lobster 是一个 Agent 与 Skill 管理平台，用于管理 AI Agent 身份、Skill 能力包、访问令牌、同步数据和平台审核流程。仓库采用前后端分离结构，前端负责 Web 控制台，后端提供认证、Agent 管理、Skill 市场、文件上传和 AI Agent API。
+知栈是一个面向 AI Agent 的资产管理与协作平台，用来统一管理智能体身份、技能包、长期记忆、执行目标、同步配置和迁移备份。它的目标不是再做一个聊天窗口，而是让个人和团队把 Agent 积累出来的能力沉淀下来、迁移出去、复用起来。
 
-## 功能概览
+## 教程
 
-- Agent 管理：创建、编辑和查看 Agent 身份、头像、角色、系统提示词、记忆和目标。
-- Skill 管理：创建 Skill 包、维护文件树、发布审核、市场展示和安装管理。
-- AI Agent API：通过 Agent Token 让外部 Agent 注册、同步配置、读写记忆和目标。
-- 账户中心：用户资料、头像上传、访问令牌和权限管理。
-- 管理后台：用户管理、Skill 审核和公告管理。
-- 一键部署：使用 Docker Compose 启动前端、后端、MySQL 和 Redis。
+- GitHub 开源地址：[https://github.com/screameegg/agent-repo](https://github.com/screameegg/agent-repo)
+- 小红书教程：[https://www.xiaohongshu.com/explore/6a4a4a89000000000702ae33?xsec_token=ABXeNFH3yUmhNx5X4kQNJmT5zTnzAXeQs6tAgniKc7cug=&xsec_source=pc_user](https://www.xiaohongshu.com/explore/6a4a4a89000000000702ae33?xsec_token=ABXeNFH3yUmhNx5X4kQNJmT5zTnzAXeQs6tAgniKc7cug=&xsec_source=pc_user)
+
+## 适合谁
+
+### 个人智能体管理
+
+把自己常用的 Agent 配置、系统提示词、技能、记忆和目标保存成可管理资产。换电脑、换模型、换工具时，不需要从零重新配置；也能清楚看到每个 Agent 记住了什么、会用哪些技能、当前正在推进什么目标。
+
+### 智能体迁移与备份
+
+支持导出和导入 Agent 资产，包括身份信息、技能挂载、Skill 文件树、长期记忆和目标步骤。适合把本地实验迁移到服务器，把个人 Agent 升级成团队模板，或者在不同运行环境之间复制一套成熟的 Agent 能力。
+
+### 团队智能体协作与写作
+
+团队可以把项目规范、写作风格、资料整理流程、接口说明和交付标准做成 Skill Package，让多个 Agent 共享同一套能力基线。适合研发文档、运营内容、方案撰写、知识库整理和多角色 Agent 协作。
+
+## 核心能力
+
+- **Agent 管理**：创建和维护多个智能体身份，集中管理角色、提示词、模型偏好、头像、记忆、目标和同步状态。
+- **Skill 能力库**：用文件树形式保存可复用技能，支持 `SKILL.md`、参考资料、示例和脚本说明，不只保存一段提示词。
+- **记忆管理**：沉淀事实、偏好、项目背景和经验，支持 Agent 在不同会话和环境之间继承上下文。
+- **目标与步骤**：把长期任务拆成可跟踪目标和执行步骤，让人和 Agent 都能看到进度。
+- **Agent Token 接入**：外部 Agent 可以通过 Token 注册、拉取配置、同步状态、读写记忆和目标。
+- **迁移备份**：导出完整 Agent 资产，支持克隆、恢复、环境迁移和长期归档。
+- **团队治理**：提供用户、权限、Skill 审核和公告管理，便于团队内部沉淀和复用 AI 能力。
+
+## 仓库结构
+
+```text
+agent-repo/
+  lobster-front/   # 前端应用，提供 Web 控制台
+  lobster-back/    # 后端服务、部署脚本和数据库初始化脚本
+```
+
+<details>
+<summary>技术部署 / 点击查看</summary>
 
 ## 技术栈
 
@@ -30,14 +61,6 @@
 - Redis / Redisson
 - Sa-Token
 - Docker Compose
-
-## 目录结构
-
-```text
-agent-repo/
-  lobster-front/   # 前端应用，提供 Web 控制台
-  lobster-back/    # 后端服务、部署脚本和数据库初始化脚本
-```
 
 ## 快速部署
 
@@ -184,6 +207,8 @@ MYSQL_PASSWORD=
 REDIS_PASSWORD=
 LOBSTER_ADMIN_PASSWORD=
 ```
+
+</details>
 
 ## 相关文档
 
