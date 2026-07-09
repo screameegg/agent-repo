@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { Bot, ArrowRight, Sparkles, Code2, Cpu, Blocks, Webhook, Box, Lock, LayoutGrid, ZapIcon, Copy, CheckCircle2, FileCode2, MessagesSquare, Wand2 } from 'lucide-react';
+import { Bot, ArrowRight, Sparkles, Code2, Cpu, Blocks, Webhook, Box, Lock, LayoutGrid, ZapIcon, Copy, CheckCircle2, FileCode2, MessagesSquare, Wand2, Github, BookOpen } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useUserStore } from '../../store/userStore';
 import { writeClipboardText } from '../../utils/clipboard';
 import { buildSkillCopyPrompt } from './skillCopyPrompt';
+import { quickEntryLinks } from '../../components/Layout/quickLinks';
 
 export default function Landing() {
   const { token } = useUserStore();
@@ -39,6 +40,11 @@ export default function Landing() {
     window.setTimeout(() => setCopiedSkillPrompt(false), 2000);
   };
 
+  const quickEntryIcons = {
+    github: <Github className="w-4 h-4" />,
+    tutorial: <BookOpen className="w-4 h-4" />,
+  } as const;
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] selection:bg-[#FFD93D] selection:text-[#1A1A1A] font-sans">
       
@@ -60,6 +66,20 @@ export default function Landing() {
           <span className="text-2xl font-black tracking-tighter text-[#1A1A1A]">知栈</span>
         </div>
         <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-2">
+            {quickEntryLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.href}
+                target={link.target}
+                rel={link.rel}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#1A1A1A] font-black text-sm rounded-xl border-4 border-[#1A1A1A] shadow-[3px_3px_0px_0px_#1A1A1A] hover:-translate-y-1 hover:shadow-[5px_5px_0px_0px_#1A1A1A] active:translate-y-0 active:shadow-[0px_0px_0px_0px_#1A1A1A] transition-all"
+              >
+                {quickEntryIcons[link.id]}
+                {link.label}
+              </a>
+            ))}
+          </div>
           <Link 
             to="/login"
             className="px-6 py-2.5 bg-white text-[#1A1A1A] font-black text-sm rounded-xl border-4 border-[#1A1A1A] shadow-[4px_4px_0px_0px_#1A1A1A] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1A1A1A] active:translate-y-0 active:shadow-[0px_0px_0px_0px_#1A1A1A] transition-all hidden md:block"
@@ -110,6 +130,20 @@ export default function Landing() {
               🚀 即刻开启构建 
               <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Link>
+            <div className="mt-6 flex flex-wrap justify-center gap-3 lg:hidden">
+              {quickEntryLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  target={link.target}
+                  rel={link.rel}
+                  className="inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-white text-[#1A1A1A] font-black text-sm rounded-xl border-4 border-[#1A1A1A] shadow-[3px_3px_0px_0px_#1A1A1A] hover:-translate-y-1 transition-all"
+                >
+                  {quickEntryIcons[link.id]}
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Bell, Bot, LogOut, Package, Store, ArrowRightLeft, UserCircle, ChevronLeft, ChevronRight, ShieldCheck, UserCog, Megaphone, MessageSquareText, Menu, X } from 'lucide-react';
+import { Bell, Bot, LogOut, Package, Store, ArrowRightLeft, UserCircle, ChevronLeft, ChevronRight, ShieldCheck, UserCog, Megaphone, MessageSquareText, Menu, X, Github, BookOpen } from 'lucide-react';
 import { useUserStore } from '../../store/userStore';
 import { cn } from '../../utils/cn';
 import { unreadNotificationCountApi } from '../../pages/notifications/service';
 import FeedbackWidget from '../feedback/FeedbackWidget';
+import { quickEntryLinks } from './quickLinks';
 
 export default function Layout() {
   const { clearAuth, user, token } = useUserStore();
@@ -66,6 +67,11 @@ export default function Layout() {
         </nav>
 
         <div className="p-4 border-t-2 border-[#1A1A1A] bg-[#FEF9F3]">
+          <div className="mb-3 space-y-2">
+            {quickEntryLinks.map((link) => (
+              <QuickEntryItem key={link.id} link={link} collapsed={collapsed} />
+            ))}
+          </div>
           <button 
             onClick={clearAuth}
             className={cn(
@@ -135,6 +141,11 @@ export default function Layout() {
                     <NavItem to="/app/admin/announcements" icon={<Megaphone className="w-5 h-5 shrink-0" />} label="公告管理" collapsed={false} onNavigate={closeMobileNav} />
                   </div>
                 )}
+                <div className="pt-4 mt-4 border-t-2 border-dashed border-[#E0E0E0] space-y-3">
+                  {quickEntryLinks.map((link) => (
+                    <QuickEntryItem key={link.id} link={link} collapsed={false} onNavigate={closeMobileNav} />
+                  ))}
+                </div>
               </nav>
 
               <div className="border-t-2 border-[#1A1A1A] bg-[#FEF9F3] p-4">
@@ -161,6 +172,11 @@ export default function Layout() {
     </div>
   );
 }
+
+const quickEntryIcons = {
+  github: <Github className="w-5 h-5 shrink-0" />,
+  tutorial: <BookOpen className="w-5 h-5 shrink-0" />,
+} as const;
 
 function NavItem({ to, icon, label, collapsed, end, badge, onNavigate }: { to: string; icon: React.ReactNode; label: string, collapsed: boolean, end?: boolean, badge?: number, onNavigate?: () => void }) {
   return (
@@ -189,5 +205,34 @@ function NavItem({ to, icon, label, collapsed, end, badge, onNavigate }: { to: s
         <span className="text-[15px] whitespace-nowrap flex-1">{label}</span>
       )}
     </NavLink>
+  );
+}
+
+function QuickEntryItem({
+  link,
+  collapsed,
+  onNavigate,
+}: {
+  link: (typeof quickEntryLinks)[number];
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <a
+      href={link.href}
+      target={link.target}
+      rel={link.rel}
+      title={link.label}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center p-3.5 rounded-xl transition-all cursor-pointer font-bold overflow-hidden text-[#1A1A1A] border-2 border-[#1A1A1A] bg-white shadow-[2px_2px_0px_0px_#1A1A1A] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#1A1A1A]",
+        collapsed ? "justify-center" : "gap-3"
+      )}
+    >
+      <span className="relative shrink-0">{quickEntryIcons[link.id]}</span>
+      {!collapsed && (
+        <span className="text-[15px] whitespace-nowrap flex-1">{link.label}</span>
+      )}
+    </a>
   );
 }
