@@ -242,12 +242,12 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-black text-[#1A1A1A] mb-2">初始指令 (System Prompt)</label>
+                  <label className="block text-sm font-black text-[#1A1A1A] mb-2">Agent 描述</label>
                   <textarea 
                     rows={4}
                     value={form.systemPrompt}
                     onChange={(event) => setForm({ ...form, systemPrompt: event.target.value })}
-                    placeholder="描述该 Agent 的核心能力和边界..."
+                    placeholder="描述该 Agent 的核心职责和边界..."
                     className="w-full px-4 py-3 bg-[#FAF9F6] border-2 border-[#1A1A1A] rounded-xl text-[#1A1A1A] font-bold focus:bg-white focus:-translate-y-0.5 focus:shadow-[4px_4px_0px_0px_#1A1A1A] transition-all outline-none resize-none custom-scrollbar"
                   ></textarea>
                 </div>
