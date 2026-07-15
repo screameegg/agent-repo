@@ -164,8 +164,20 @@ export default function Layout() {
           </div>
         )}
 
-        <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-full">
-          <Outlet />
+        <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-full flex flex-col">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <footer className="mt-10 border-t-2 border-[#1A1A1A]/10 pt-5 text-center text-xs font-bold text-[#777]">
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-[#1A1A1A] transition-colors"
+            >
+              豫ICP备2026030627号-1
+            </a>
+          </footer>
         </div>
       </main>
       <FeedbackWidget />

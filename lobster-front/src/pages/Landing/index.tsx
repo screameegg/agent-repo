@@ -352,8 +352,16 @@ export default function Landing() {
             </div>
             <span className="text-2xl font-black tracking-tighter text-white">知栈</span>
           </div>
-          <div className="text-gray-400 font-bold">
-            © {new Date().getFullYear()} 知栈.
+          <div className="flex flex-col items-center md:items-end gap-2 text-gray-400 font-bold">
+            <span>© {new Date().getFullYear()} 知栈.</span>
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              豫ICP备2026030627号-1
+            </a>
           </div>
         </div>
       </footer>
