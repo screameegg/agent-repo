@@ -44,6 +44,34 @@ export default function Landing() {
     github: <Github className="w-4 h-4" />,
     tutorial: <BookOpen className="w-4 h-4" />,
   } as const;
+  const footerColumns = [
+    {
+      title: '产品',
+      links: [
+        { label: '进入控制台', href: '/login' },
+        { label: 'Agent 仓库', href: '/login' },
+        { label: '技能市场', href: '/login' },
+        { label: '资产迁移', href: '/login' },
+      ],
+    },
+    {
+      title: '资源',
+      links: [
+        { label: 'GitHub 开源', href: 'https://github.com/screameegg/agent-repo', external: true },
+        { label: '小红书教程', href: 'https://www.xiaohongshu.com/explore/6a4a4a89000000000702ae33?xsec_token=ABXeNFH3yUmhNx5X4kQNJmT5zTnzAXeQs6tAgniKc7cug=&xsec_source=pc_user', external: true },
+        { label: 'AI 接入手册', href: '/docs/ai-agent-api.md' },
+      ],
+    },
+    {
+      title: '能力',
+      links: [
+        { label: 'Skill 文件树', href: '/login' },
+        { label: '长期记忆', href: '/login' },
+        { label: '目标同步', href: '/login' },
+        { label: 'Token 权限', href: '/login' },
+      ],
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] selection:bg-[#FFD93D] selection:text-[#1A1A1A] font-sans">
@@ -344,21 +372,66 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#1A1A1A] text-white py-12 px-6 md:px-12 border-t-4 border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#FFD93D] border-[3px] border-[#1A1A1A] rounded-xl flex items-center justify-center">
-              <Bot className="w-7 h-7 text-[#1A1A1A]" />
+      <footer className="bg-[#1A1A1A] text-white px-6 md:px-12 pt-16 pb-8 border-t-4 border-[#1A1A1A]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.25fr_2fr]">
+            <div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#FFD93D] border-[3px] border-white rounded-xl flex items-center justify-center shadow-[3px_3px_0px_0px_#FFD93D]">
+                  <Bot className="w-7 h-7 text-[#1A1A1A]" />
+                </div>
+                <span className="text-2xl font-black tracking-tighter text-white">知栈</span>
+              </div>
+              <p className="mt-5 max-w-md text-sm font-bold leading-7 text-white/62">
+                面向 AI Agent 的资产管理平台，用来沉淀 Skill、记忆、目标和可迁移配置。
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/login"
+                  className="inline-flex min-h-10 items-center rounded-xl border-2 border-white bg-[#FFD93D] px-4 text-sm font-black text-[#1A1A1A] transition-all hover:-translate-y-0.5"
+                >
+                  进入控制台
+                </Link>
+                <a
+                  href="https://github.com/screameegg/agent-repo"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-10 items-center rounded-xl border-2 border-white/40 px-4 text-sm font-black text-white transition-all hover:border-white hover:bg-white/10"
+                >
+                  GitHub
+                </a>
+              </div>
             </div>
-            <span className="text-2xl font-black tracking-tighter text-white">知栈</span>
+
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+              {footerColumns.map((column) => (
+                <div key={column.title}>
+                  <h3 className="text-sm font-black text-white">{column.title}</h3>
+                  <div className="mt-4 space-y-3">
+                    {column.links.map((link) => (
+                      <a
+                        key={`${column.title}-${link.label}`}
+                        href={link.href}
+                        target={link.external ? '_blank' : undefined}
+                        rel={link.external ? 'noreferrer' : undefined}
+                        className="block text-sm font-bold text-white/55 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-col items-center md:items-end gap-2 text-gray-400 font-bold">
-            <span>© {new Date().getFullYear()} 知栈.</span>
+
+          <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-5 text-[11px] font-bold text-white/32 sm:flex-row sm:items-center sm:justify-between">
+            <span>© {new Date().getFullYear()} 知栈 Lobster. Open source AI Agent assets platform.</span>
             <a
               href="https://beian.miit.gov.cn/"
               target="_blank"
               rel="noreferrer"
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="w-fit transition-colors hover:text-white/70"
             >
               豫ICP备2026030627号-1
             </a>
@@ -369,3 +442,4 @@ export default function Landing() {
     </div>
   );
 }
+

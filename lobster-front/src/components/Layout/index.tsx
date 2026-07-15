@@ -164,19 +164,26 @@ export default function Layout() {
           </div>
         )}
 
-        <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-full flex flex-col">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-[calc(100vh+8rem)] flex flex-col">
           <div className="flex-1">
             <Outlet />
           </div>
-          <footer className="mt-10 border-t-2 border-[#1A1A1A]/10 pt-5 text-center text-xs font-bold text-[#777]">
-            <a
-              href="https://beian.miit.gov.cn/"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-[#1A1A1A] transition-colors"
-            >
-              豫ICP备2026030627号-1
-            </a>
+          <footer className="mt-20 border-t border-[#1A1A1A]/10 pt-5 pb-2 text-[11px] font-bold text-[#8A8A8A]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-start">
+                <span>© {new Date().getFullYear()} 知栈 Lobster</span>
+                <a href="https://github.com/screameegg/agent-repo" target="_blank" rel="noreferrer" className="hover:text-[#1A1A1A] transition-colors">GitHub</a>
+                <a href="/docs/ai-agent-api.md" className="hover:text-[#1A1A1A] transition-colors">AI 接入手册</a>
+              </div>
+              <a
+                href="https://beian.miit.gov.cn/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-center text-[#A0A0A0] hover:text-[#1A1A1A] transition-colors sm:text-right"
+              >
+                豫ICP备2026030627号-1
+              </a>
+            </div>
           </footer>
         </div>
       </main>
@@ -248,3 +255,4 @@ function QuickEntryItem({
     </a>
   );
 }
+
