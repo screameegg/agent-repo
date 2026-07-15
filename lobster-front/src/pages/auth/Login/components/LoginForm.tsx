@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { LoginFormData } from '../types';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { getCaptchaApi } from '../service';
+import { getApiErrorMessage } from '../../../../services/request';
 import {
   captchaFieldRowClassName,
   captchaImageButtonClassName,
@@ -40,8 +41,8 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
       } else {
         setCaptchaError(res.message || '验证码加载失败');
       }
-    } catch {
-      setCaptchaError('验证码加载失败');
+    } catch (err) {
+      setCaptchaError(getApiErrorMessage(err, '验证码加载失败'));
     } finally {
       setCaptchaLoading(false);
     }
@@ -127,3 +128,4 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
     </form>
   );
 }
+
