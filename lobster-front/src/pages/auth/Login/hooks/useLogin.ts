@@ -4,6 +4,7 @@ import { useUserStore } from '../../../../store/userStore';
 import { loginApi, registerApi } from '../service';
 import { LoginFormData, LoginResponse, RegisterFormData } from '../types';
 import logger from '../../../../utils/logger';
+import { getApiErrorMessage } from '../../../../services/request';
 
 export const useLogin = () => {
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ export const useLogin = () => {
       }
     } catch (err) {
       logger.error('Login error:', err);
-      setError('系统异常，请稍后重试');
+      setError(getApiErrorMessage(err, '登录失败'));
       return false;
     } finally {
       setLoading(false);
@@ -54,7 +55,7 @@ export const useLogin = () => {
       }
     } catch (err) {
       logger.error('Register error:', err);
-      setError('系统异常，请稍后重试');
+      setError(getApiErrorMessage(err, '注册失败'));
       return false;
     } finally {
       setLoading(false);
@@ -63,3 +64,4 @@ export const useLogin = () => {
 
   return { handleLogin, handleRegister, loading, error };
 };
+

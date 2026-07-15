@@ -4,6 +4,30 @@ import { useUserStore } from '../store/userStore';
 import logger from '../utils/logger';
 import { createDedupeAdapter } from './requestDedupe';
 
+type ApiErrorBody = {
+  message?: unknown;
+};
+
+const isApiErrorBody = (value: unknown): value is ApiErrorBody => {
+  return typeof value === 'object' && value !== null && 'message' in value;
+};
+
+export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (isApiErrorBody(data) && typeof data.message === 'string' && data.message.trim()) {
+      return data.message;
+    }
+    return fallback;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+};
+
 const request = axios.create({
   baseURL: ENV.API_BASE_URL,
   timeout: 10000,
@@ -39,3 +63,4 @@ request.interceptors.response.use(
 );
 
 export default request;
+
