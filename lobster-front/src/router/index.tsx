@@ -4,6 +4,7 @@ import AuthGuard from './AuthGuard';
 
 import Landing from '../pages/Landing';
 import Login from '../pages/auth/Login';
+import AiAgentApiDoc from '../pages/docs/AiAgentApiDoc';
 import Dashboard from '../pages/agent/Dashboard';
 import AgentDetail from '../pages/agent/Detail';
 import SkillMarket from '../pages/skill/Market';
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/docs/ai-agent-api',
+    element: <AiAgentApiDoc />,
   },
   {
     path: '/app/profile/skill-editor/:id',
@@ -133,3 +138,4 @@ const router = createBrowserRouter([
 export function AppRouter() {
   return <RouterProvider router={router} />;
 }
+

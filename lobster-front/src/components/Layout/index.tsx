@@ -173,7 +173,7 @@ export default function Layout() {
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-start">
                 <span>© {new Date().getFullYear()} 知栈 Lobster</span>
                 <a href="https://github.com/screameegg/agent-repo" target="_blank" rel="noreferrer" className="hover:text-[#1A1A1A] transition-colors">GitHub</a>
-                <a href="/docs/ai-agent-api.md" className="hover:text-[#1A1A1A] transition-colors">AI 接入手册</a>
+                <a href="/docs/ai-agent-api" className="hover:text-[#1A1A1A] transition-colors">AI 接入手册</a>
               </div>
               <a
                 href="https://beian.miit.gov.cn/"
