@@ -425,13 +425,13 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-5 text-[11px] font-bold text-white/32 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-5 text-xs font-bold text-white/45 sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} 知栈 Lobster. Open source AI Agent assets platform.</span>
             <a
               href="https://beian.miit.gov.cn/"
               target="_blank"
               rel="noreferrer"
-              className="w-fit transition-colors hover:text-white/70"
+              className="w-fit transition-colors hover:text-white/80"
             >
               豫ICP备2026030627号-1
             </a>

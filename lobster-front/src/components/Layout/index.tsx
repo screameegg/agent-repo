@@ -168,7 +168,7 @@ export default function Layout() {
           <div className="flex-1">
             <Outlet />
           </div>
-          <footer className="mt-20 border-t border-[#1A1A1A]/10 pt-5 pb-2 text-[11px] font-bold text-[#8A8A8A]">
+          <footer className="mt-20 border-t border-[#1A1A1A]/10 pt-5 pb-2 text-xs font-bold text-[#777]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-start">
                 <span>© {new Date().getFullYear()} 知栈 Lobster</span>
@@ -179,7 +179,7 @@ export default function Layout() {
                 href="https://beian.miit.gov.cn/"
                 target="_blank"
                 rel="noreferrer"
-                className="text-center text-[#A0A0A0] hover:text-[#1A1A1A] transition-colors sm:text-right"
+                className="text-center text-[#888] hover:text-[#1A1A1A] transition-colors sm:text-right"
               >
                 豫ICP备2026030627号-1
               </a>
